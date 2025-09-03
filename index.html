@@ -6,41 +6,7 @@
   <title>POTSUN</title>
   <meta name="description" content="เครื่องมือวิเคราะห์เชิงปริมาณและเศรษฐศาสตร์ ทำงานบนเบราว์เซอร์ ไม่ต้องใช้เซิร์ฟเวอร์" />
   <link rel="preconnect" href="https://cdn.plot.ly">
-  <style>
-    :root{ --bg:#071127; --panel:#0e1724; --muted:#9fb0c8; --text:#e6eef8; --accent:#22c55e; --accent2:#10b981; --radius:12px }
-    *{box-sizing:border-box} html,body{height:100%;} body{margin:0;font-family:Inter, Roboto, "Noto Sans Thai", system-ui, -apple-system; background:linear-gradient(180deg,#041028 0%, #071127 60%); color:var(--text);}    
-    .container{width:min(1100px,94%);margin:24px auto}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-    header h1{margin:0;font-size:24px;font-weight:600}
-    nav{display:flex;gap:8px}
-    .tabbtn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
-    .tabbtn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#042018;border:none}
-    .panel{background:var(--panel);border:1px solid rgba(255,255,255,0.04);padding:16px;border-radius:12px;margin-top:18px}
-    label{display:block;color:var(--muted);margin-bottom:6px}
-    textarea,input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:#071527;color:var(--text);font-family:monospace}
-    textarea{min-height:80px;resize:vertical}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;padding:10px 12px;border-radius:10px;color:#042018;cursor:pointer}
-    pre{background:#081425;padding:10px;border-radius:8px;overflow:auto}
-    .grid2{display:grid;grid-template-columns:1fr 420px;gap:12px}
-    .btn-group{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
-    .output-container{margin-top:12px}
-    .plot-container{width:100%;height:360px}
-    .inline-input{padding:8px;border-radius:8px;background:#071425;border:1px solid rgba(255,255,255,.04);color:var(--text)}
-    #maWindow{width:110px}
-    #predX{width:180px}
-    #elasP{width:140px}
-    hr{border:none;border-top:1px solid rgba(255,255,255,.03);margin:16px 0}
-    footer{margin-top:24px;padding-top:12px;color:var(--muted);text-align:center;font-size:14px;border-top:1px solid rgba(255,255,255,0.04)}
-    .error-message {
-      color: #f87171;
-      background-color: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      padding: 10px;
-      border-radius: 8px;
-    }
-    @media(max-width:900px){.row{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
-  </style>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 </head>
 <body>
@@ -51,6 +17,9 @@
         <button class="tabbtn active" data-tab="stats">สถิติธุรกิจ</button>
         <button class="tabbtn" data-tab="quant">วิเคราะห์เชิงปริมาณ</button>
         <button class="tabbtn" data-tab="econ">เศรษฐศาสตร์</button>
+        <button class="tabbtn" data-tab="algebra">พีชคณิต</button>
+        <button class="tabbtn" data-tab="finance">การเงิน</button>
+        <button class="tabbtn" data-tab="inference">สถิติอนุมาน</button>
       </nav>
     </header>
 
@@ -62,7 +31,8 @@
       <div class="btn-group">
         <button class="btn" id="calcStats">คำนวณสถิติพื้นฐาน</button>
         <button class="btn" id="calcMA">คำนวณค่าเฉลี่ยเคลื่อนที่ (MA)</button>
-        <input id="maWindow" type="number" value="3" min="1" class="inline-input">
+        <label for="maWindow" style="margin-left: 8px; margin-bottom: 0;">ขนาด Window:</label>
+        <input id="maWindow" type="number" value="3" min="1" class="inline-input" style="width: 80px;">
       </div>
       <div id="statsOut" class="output-container"></div>
     </section>
@@ -89,52 +59,99 @@
         <div>
           <div id="lrResult"></div>
           <hr>
-          <h3>Expected Value (EV)</h3>
-          <label for="ev_outcomes">Outcomes (ผลลัพธ์)</label>
+          <h3>ค่าคาดหวัง (Expected Value)</h3>
+          <label for="ev_outcomes">ผลลัพธ์ (Outcomes)</label>
           <input id="ev_outcomes" placeholder="100 200">
-          <label for="ev_probs">Probabilities (ผลรวม=1)</label>
+          <label for="ev_probs">ความน่าจะเป็น (Probabilities, ผลรวม=1)</label>
           <input id="ev_probs" placeholder="0.5 0.5">
           <div class="btn-group"><button class="btn" id="calcEV">คำนวณ EV</button></div>
           <div id="evOut" class="output-container"></div>
           <hr>
-          <h3>Quadratic Minimizer</h3>
+          <h3>การวิเคราะห์การตัดสินใจ (Payoff Matrix)</h3>
+          <p style="color:var(--muted); margin-top:0;">ป้อนข้อมูล Payoff โดยแต่ละแถวคือทางเลือก (Alternative) และแต่ละคอลัมน์คือสภาวะการณ์ (State of Nature)</p>
+          <label for="payoff_matrix">Payoff Matrix (คั่นด้วยช่องว่าง, ขึ้นบรรทัดใหม่สำหรับแต่ละทางเลือก)</label>
+          <textarea id="payoff_matrix" placeholder="10 20 30&#10;15 25 10&#10;5 40 20"></textarea>
           <div class="btn-group">
-            <input id="qa" type="number" placeholder="a" value="1">
-            <input id="qb" type="number" placeholder="b" value="0">
-            <input id="qc" type="number" placeholder="c" value="0">
-            <button class="btn" id="calcQuad">คำนวณ</button>
+            <button class="btn" id="calcPayoff">วิเคราะห์</button>
+            <label for="hurwicz_alpha" style="margin-left: 8px; margin-bottom: 0;">Alpha (Hurwicz):</label>
+            <input id="hurwicz_alpha" type="number" value="0.7" step="0.1" min="0" max="1" class="inline-input" style="width: 80px;">
           </div>
-          <div id="quadOut" class="output-container"></div>
+          <div id="payoffOut" class="output-container"></div>
+
+
+          <hr>
+          <h3>การแจกแจงความน่าจะเป็น (Probability Distributions)</h3>
+
+          <h4 style="margin-top: 16px;">การแจกแจงทวินาม (Binomial)</h4>
+          <p style="color:var(--muted); margin-top:0;">P(X=x) = C(n,x) * pˣ * (1-p)ⁿ⁻ˣ</p>
+          <div class="row">
+            <div>
+              <label for="bino_n">จำนวนครั้งที่ทดลอง (n)</label>
+              <input id="bino_n" type="number" value="10">
+            </div>
+            <div>
+              <label for="bino_p">ความน่าจะเป็นที่จะสำเร็จ (p)</label>
+              <input id="bino_p" type="number" value="0.5" step="0.01" min="0" max="1">
+            </div>
+            <div>
+              <label for="bino_x">จำนวนครั้งที่สำเร็จ (x)</label>
+              <input id="bino_x" type="number" value="5">
+            </div>
+          </div>
+          <div class="btn-group"><button class="btn" id="calcBino">คำนวณ</button></div>
+          <div id="binoOut" class="output-container"></div>
+          
+          <h4 style="margin-top: 16px;">การแจกแจงปัวซง (Poisson)</h4>
+          <p style="color:var(--muted); margin-top:0;">P(X=x) = (λˣ * e⁻ˡ) / x!</p>
+          <div class="row">
+            <div><label for="poisson_l">ค่าเฉลี่ย (λ)</label><input id="poisson_l" type="number" value="3"></div>
+            <div><label for="poisson_x">จำนวนเหตุการณ์ (x)</label><input id="poisson_x" type="number" value="2"></div>
+          </div>
+          <div class="btn-group"><button class="btn" id="calcPoisson">คำนวณ</button></div>
+          <div id="poissonOut" class="output-container"></div>
         </div>
         <div>
           <div id="lrPlot" class="plot-container"></div>
         </div>
       </div>
+      <hr>
+      <h3>พล็อตกราฟและหาค่าที่เหมาะสม (Function Plotter & Optimizer)</h3>
+      <label for="func_expr">นิพจน์ฟังก์ชัน (ใช้ x เป็นตัวแปร)</label>
+      <input id="func_expr" type="text" placeholder="เช่น -x^2 + 4*x">
+      <div class="row">
+        <div><label for="func_min_x">ช่วง x ต่ำสุด</label><input id="func_min_x" type="number" value="-10"></div>
+        <div><label for="func_max_x">ช่วง x สูงสุด</label><input id="func_max_x" type="number" value="10"></div>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="plotFunc">พล็อตกราฟ</button>
+      </div>
+      <div id="funcPlot" class="plot-container"></div>
     </section>
     <section id="econ" class="panel" style="display:none">
       <h2>เศรษฐศาสตร์ (อุปสงค์/อุปทาน)</h2>
       <p style="color:var(--muted)">ฟอร์ม: Qd = a - bP , Qs = c + dP</p>
       <div class="row">
         <div>
-          <label for="ea">a (Max demand when P=0)</label>
+          <label for="ea">a (อุปสงค์สูงสุดเมื่อ P=0)</label>
           <input id="ea" type="number" value="100">
         </div>
         <div>
-          <label for="eb">b (Slope demand)</label>
+          <label for="eb">b (ความชันของอุปสงค์)</label>
           <input id="eb" type="number" value="2">
         </div>
         <div>
-          <label for="ec">c (Min supply when P=0)</label>
+          <label for="ec">c (อุปทานเมื่อ P=0)</label>
           <input id="ec" type="number" value="20">
         </div>
         <div>
-          <label for="ed">d (Slope supply)</label>
+          <label for="ed">d (ความชันของอุปทาน)</label>
           <input id="ed" type="number" value="1">
         </div>
       </div>
       <div class="btn-group">
         <button class="btn" id="calcEq">คำนวณสมดุลตลาด</button>
         <button class="btn" id="plotDS">สร้างกราฟอุปสงค์-อุปทาน</button>
+        <label for="elasP" style="margin-left: 8px; margin-bottom: 0;">ราคาสำหรับความยืดหยุ่น:</label>
         <input id="elasP" type="number" value="50" class="inline-input">
         <button class="btn" id="calcElas">คำนวณความยืดหยุ่น</button>
       </div>
@@ -142,190 +159,282 @@
         <div>
           <div id="econOut"></div>
           <hr>
-          <h3>Break-even (จุดคุ้มทุน)</h3>
-          <label for="fc">Fixed Costs</label>
+          <h3>จุดคุ้มทุน (Break-even)</h3>
+          <label for="fc">ต้นทุนคงที่ (Fixed Costs)</label>
           <input id="fc" type="number" value="1000">
-          <label for="vc">Variable Cost per Unit</label>
+          <label for="vc">ต้นทุนผันแปรต่อหน่วย (Variable Cost)</label>
           <input id="vc" type="number" value="5">
-          <label for="ppu">Price per Unit</label>
+          <label for="ppu">ราคาขายต่อหน่วย (Price per Unit)</label>
           <input id="ppu" type="number" value="15">
           <div class="btn-group"><button class="btn" id="calcBE">คำนวณ BE</button></div>
-          <div id="beOut" class="output-container"></div>
+          <div id="beOut" class="output-container"></div> <hr> <h3>ปริมาณการสั่งซื้อที่ประหยัดที่สุด (EOQ)</h3>
+          <label for="eoq_d">ความต้องการสินค้าต่อปี (D)</label>
+          <input id="eoq_d" type="number" value="1000">
+          <label for="eoq_s">ต้นทุนการสั่งซื้อต่อครั้ง (S)</label>
+          <input id="eoq_s" type="number" value="50">
+          <label for="eoq_h">ต้นทุนการเก็บรักษาสินค้าต่อหน่วย (H)</label>
+          <input id="eoq_h" type="number" value="5">
+          <div class="btn-group"><button class="btn" id="calcEOQ">คำนวณ EOQ</button></div>
+          <div id="eoqOut" class="output-container"></div>
         </div>
         <div>
           <div id="dsPlot" class="plot-container"></div>
         </div>
       </div>
     </section>
+    <section id="algebra" class="panel" style="display:none">
+      <h2>พีชคณิต (Algebra)</h2>
+      
+      <h3>แก้สมการเชิงเส้น (ax + b = c)</h3>
+      <div class="btn-group">
+        <input id="lin_a" type="number" placeholder="a" value="2" class="inline-input" style="width: 80px;">
+        <label style="margin:0 4px;">x +</label>
+        <input id="lin_b" type="number" placeholder="b" value="5" class="inline-input" style="width: 80px;">
+        <label style="margin:0 4px;">=</label>
+        <input id="lin_c" type="number" placeholder="c" value="15" class="inline-input" style="width: 80px;">
+        <button class="btn" id="calcLinEq">แก้สมการ</button>
+      </div>
+      <div id="linEqOut" class="output-container"></div>
+      <hr>
+
+      <h3>แก้สมการกำลังสอง (ax² + bx + c = 0)</h3>
+      <div class="btn-group">
+        <input id="quad_a" type="number" placeholder="a" value="1" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">x² +</label>
+        <input id="quad_b" type="number" placeholder="b" value="-3" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">x +</label>
+        <input id="quad_c" type="number" placeholder="c" value="2" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">= 0</label>
+        <button class="btn" id="calcQuadEq">แก้สมการ</button>
+      </div>
+      <div id="quadEqOut" class="output-container"></div>
+      <hr>
+
+      <h3>เลขยกกำลัง (Base<sup>Exponent</sup>)</h3>
+      <div class="btn-group">
+        <label style="margin:0 4px;">ฐาน (Base):</label>
+        <input id="pow_base" type="number" placeholder="Base" value="2" class="inline-input" style="width: 100px;">
+        <label style="margin:0 4px;">เลขชี้กำลัง (Exponent):</label>
+        <input id="pow_exp" type="number" placeholder="Exponent" value="10" class="inline-input" style="width: 100px;">
+        <button class="btn" id="calcPow">คำนวณ</button>
+      </div>
+      <div id="powOut" class="output-container"></div>
+      <hr>
+
+      <h3>ลอการิทึม (log<sub>Base</sub>(Number))</h3>
+      <div class="btn-group">
+        <label style="margin:0 4px;">ฐาน (Base):</label>
+        <input id="log_base" type="number" placeholder="Base" value="10" class="inline-input" style="width: 100px;">
+        <label style="margin:0 4px;">ตัวเลข (Number):</label>
+        <input id="log_num" type="number" placeholder="Number" value="100" class="inline-input" style="width: 100px;">
+        <button class="btn" id="calcLog">คำนวณ</button>
+      </div>
+      <div id="logOut" class="output-container"></div>
+      <hr>
+
+      <h3>อนุกรมเลขคณิต (Arithmetic Series)</h3>
+      <p style="color:var(--muted); margin-top:0;">คำนวณผลบวก n พจน์แรก: S<sub>n</sub> = n/2 * (2a<sub>1</sub> + (n-1)d)</p>
+      <div class="row">
+        <div>
+          <label for="arith_a1">พจน์แรก (a₁)</label>
+          <input id="arith_a1" type="number" value="1">
+        </div>
+        <div>
+          <label for="arith_d">ผลต่างร่วม (d)</label>
+          <input id="arith_d" type="number" value="2">
+        </div>
+        <div>
+          <label for="arith_n">จำนวนพจน์ (n)</label>
+          <input id="arith_n" type="number" value="10">
+        </div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcArith">คำนวณ</button></div>
+      <div id="arithOut" class="output-container"></div>
+      <hr>
+
+      <h3>อนุกรมเรขาคณิต (Geometric Series)</h3>
+      <p style="color:var(--muted); margin-top:0;">คำนวณผลบวก n พจน์แรก: S<sub>n</sub> = a₁(1-rⁿ)/(1-r)</p>
+      <div class="row">
+        <div><label for="geo_a1">พจน์แรก (a₁)</label><input id="geo_a1" type="number" value="2"></div>
+        <div><label for="geo_r">อัตราส่วนร่วม (r)</label><input id="geo_r" type="number" value="3"></div>
+        <div><label for="geo_n">จำนวนพจน์ (n)</label><input id="geo_n" type="number" value="5"></div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcGeo">คำนวณ</button></div>
+      <div id="geoOut" class="output-container"></div>
+    </section>
+
+    <section id="finance" class="panel" style="display:none">
+      <h2>การเงินพื้นฐาน (Basic Finance)</h2>
+      
+      <h3>ร้อยละ / เปอร์เซ็นต์ (Percentage)</h3>
+      <div class="row">
+        <div>
+          <p style="color:var(--muted); margin-top:0;">หาค่าจากเปอร์เซ็นต์ (เช่น 20% ของ 150 คือเท่าไหร่)</p>
+          <div class="btn-group">
+            <input id="perc1_p" type="number" value="20" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">% ของ</label>
+            <input id="perc1_val" type="number" value="150" class="inline-input" style="width: 120px;">
+            <button class="btn" id="calcPerc1">คำนวณ</button>
+          </div>
+          <div id="perc1Out" class="output-container"></div>
+        </div>
+        <div>
+          <p style="color:var(--muted); margin-top:0;">หาว่าคิดเป็นกี่เปอร์เซ็นต์ (เช่น 30 เป็นกี่ % ของ 150)</p>
+          <div class="btn-group">
+            <input id="perc2_part" type="number" value="30" class="inline-input" style="width: 120px;"><label style="margin:0 4px;">เป็นกี่ % ของ</label>
+            <input id="perc2_total" type="number" value="150" class="inline-input" style="width: 120px;">
+            <button class="btn" id="calcPerc2">คำนวณ</button>
+          </div>
+          <div id="perc2Out" class="output-container"></div>
+        </div>
+      </div>
+      <hr>
+
+      <h3>อัตราส่วน (Ratio)</h3>
+      <p style="color:var(--muted); margin-top:0;">ลดทอนอัตราส่วนให้อยู่ในรูปอย่างต่ำ</p>
+      <div class="btn-group">
+        <input id="ratio_a" type="number" value="50" class="inline-input" style="width: 120px;"><label style="margin:0 4px;">:</label>
+        <input id="ratio_b" type="number" value="100" class="inline-input" style="width: 120px;">
+        <button class="btn" id="calcRatio">ลดทอน</button>
+      </div>
+      <div id="ratioOut" class="output-container"></div>
+      <hr>
+
+      <h3>ดอกเบี้ยธรรมดา (Simple Interest)</h3>
+      <div class="row">
+        <div>
+          <label for="si_p">เงินต้น (Principal)</label>
+          <input id="si_p" type="number" value="10000">
+        </div>
+        <div>
+          <label for="si_r">อัตราดอกเบี้ยต่อปี (%)</label>
+          <input id="si_r" type="number" value="5">
+        </div>
+        <div>
+          <label for="si_t">ระยะเวลา (ปี)</label>
+          <input id="si_t" type="number" value="3">
+        </div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcSI">คำนวณ</button></div>
+      <div id="siOut" class="output-container"></div>
+      <hr>
+
+      <h3>ดอกเบี้ยทบต้น / มูลค่าอนาคต (Compound Interest / FV)</h3>
+      <div class="row">
+        <div>
+          <label for="fv_p">เงินต้น (Principal)</label>
+          <input id="fv_p" type="number" value="10000">
+        </div>
+        <div>
+          <label for="fv_r">อัตราดอกเบี้ยต่อปี (%)</label>
+          <input id="fv_r" type="number" value="5">
+        </div>
+        <div>
+          <label for="fv_n">จำนวนครั้งที่ทบต้นต่อปี</label>
+          <input id="fv_n" type="number" value="12">
+        </div>
+        <div>
+          <label for="fv_t">จำนวนปี</label>
+          <input id="fv_t" type="number" value="10">
+        </div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcFV">คำนวณ</button></div>
+      <div id="fvOut" class="output-container"></div>
+      <hr>
+
+      <h3>มูลค่าปัจจุบัน (Present Value)</h3>
+      <p style="color:var(--muted); margin-top:0;">คำนวณว่าต้องใช้เงินต้นเท่าไหร่เพื่อให้ได้เงินตามเป้าหมายในอนาคต</p>
+      <div class="row">
+        <div>
+          <label for="pv_fv">มูลค่าเป้าหมายในอนาคต (Future Value)</label>
+          <input id="pv_fv" type="number" value="20000">
+        </div>
+        <div>
+          <label for="pv_r">อัตราผลตอบแทนต่อปี (%)</label>
+          <input id="pv_r" type="number" value="5">
+        </div>
+        <div>
+          <label for="pv_n">จำนวนครั้งที่ทบต้นต่อปี</label>
+          <input id="pv_n" type="number" value="12">
+        </div>
+        <div>
+          <label for="pv_t">จำนวนปี</label>
+          <input id="pv_t" type="number" value="10">
+        </div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcPV">คำนวณ</button></div>
+      <div id="pvOut" class="output-container"></div>
+
+      <hr>
+
+      <h3>คำนวณเงินกู้/สินเชื่อ (Loan Payment)</h3>
+      <div class="row">
+        <div>
+          <label for="loan_p">เงินต้น (Loan Amount)</label>
+          <input id="loan_p" type="number" value="1000000">
+        </div>
+        <div>
+          <label for="loan_r">อัตราดอกเบี้ยต่อปี (%)</label>
+          <input id="loan_r" type="number" value="3">
+        </div>
+        <div>
+          <label for="loan_t">ระยะเวลา (ปี)</label>
+          <input id="loan_t" type="number" value="30">
+        </div>
+        <div>
+          <label for="loan_n">จำนวนงวดต่อปี</label>
+          <input id="loan_n" type="number" value="12">
+        </div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcLoan">คำนวณ</button></div>
+      <div id="loanOut" class="output-container"></div>
+      <hr>
+
+      <h3>มูลค่าปัจจุบันสุทธิ (NPV)</h3>
+      <label for="npv_rate">อัตราคิดลด (Discount Rate, %)</label>
+      <input id="npv_rate" type="number" value="10">
+      <label for="npv_cfs">กระแสเงินสด (ใส่เงินลงทุนเริ่มต้นเป็นค่าลบ, คั่นด้วยคอมมา)</label>
+      <textarea id="npv_cfs" placeholder="-10000, 2500, 3000, 3500, 4000"></textarea>
+      <div class="btn-group"><button class="btn" id="calcNPV">คำนวณ NPV</button></div>
+      <div id="npvOut" class="output-container"></div>
+      <hr>
+
+      <h3>อัตราผลตอบแทนภายใน (IRR)</h3>
+      <p style="color:var(--muted); margin-top:0;">คำนวณหาอัตราคิดลดที่ทำให้ NPV ของโครงการเป็นศูนย์</p>
+      <label for="irr_cfs">กระแสเงินสด (ใส่เงินลงทุนเริ่มต้นเป็นค่าลบ, คั่นด้วยคอมมา)</label>
+      <textarea id="irr_cfs" placeholder="-10000, 3000, 4000, 5000, 2000"></textarea>
+      <div class="btn-group"><button class="btn" id="calcIRR">คำนวณ IRR</button></div>
+      <div id="irrOut" class="output-container"></div>
+    </section>
+
+    <section id="inference" class="panel" style="display:none">
+      <h2>สถิติอนุมาน (Inferential Statistics)</h2>
+
+      <h3>การทดสอบที (Two-Sample t-Test)</h3>
+      <p style="color:var(--muted); margin-top:0;">ทดสอบสมมติฐานว่าค่าเฉลี่ยของสองกลุ่มประชากรไม่เท่ากัน (H₁: μ₁ ≠ μ₂)</p>
+      <div class="row">
+        <div>
+          <label for="ttest_samp1">ข้อมูลกลุ่มที่ 1</label>
+          <textarea id="ttest_samp1" placeholder="1.1 2.3 2.5 4.1"></textarea>
+        </div>
+        <div>
+          <label for="ttest_samp2">ข้อมูลกลุ่มที่ 2</label>
+          <textarea id="ttest_samp2" placeholder="3.1 3.5 4.2 4.8 5.0"></textarea>
+        </div>
+      </div>
+      <div class="btn-group"><button class="btn" id="calcTTest">คำนวณ t-test</button></div>
+      <div id="ttestOut" class="output-container"></div>
+      <hr>
+
+      <h3>การทดสอบไคสแควร์ (Chi-Square Goodness-of-Fit)</h3>
+      <p style="color:var(--muted); margin-top:0;">ทดสอบว่าข้อมูลที่สังเกตได้สอดคล้องกับการแจกแจงที่คาดหวังหรือไม่</p>
+      <label for="chi_obs">ความถี่ที่สังเกตได้ (Observed)</label>
+      <input id="chi_obs" placeholder="50 30 20">
+      <label for="chi_exp">ความถี่ที่คาดหวัง (Expected)</label>
+      <input id="chi_exp" placeholder="40 40 20">
+      <div class="btn-group"><button class="btn" id="calcChiSquare">คำนวณ Chi-Square</button></div>
+      <div id="chiOut" class="output-container"></div>
+    </section>
 
     <footer>POTSUN Analytics Tool © 2024</footer>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-    // --- UTILITY FUNCTIONS ---
-    function parseNums(s){ if(!s) return []; return s.replace(/,/g,' ').trim().split(/\s+/).map(x=>parseFloat(x)).filter(x=>!isNaN(x)); }
-    function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length }
-    function median(arr){ const s=arr.slice().sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2? s[m]:(s[m-1]+s[m])/2 }
-    function mode(arr){ const m = {}; arr.forEach(x=>m[x]=(m[x]||0)+1); let max=0, val=null; for(const k in m){ if(m[k]>max){max=m[k]; val=Number(k)} } const counts = Object.values(m); if(counts.filter(v=>v===max).length>1) return 'ไม่มีโหมดที่ชัดเจน'; return val }
-    function variance(arr){ const mu=mean(arr); return arr.reduce((a,b)=>a+(b-mu)**2,0)/arr.length }
-    function stddev(arr){ return Math.sqrt(variance(arr)) }
-
-    function displayInPre(elementId, content) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      const pre = document.createElement('pre');
-      pre.textContent = content;
-      el.innerHTML = ''; // Clear previous content
-      el.appendChild(pre);
-    }
-
-    function showError(message, elementId) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'error-message';
-      errorDiv.textContent = message;
-      el.innerHTML = ''; // Clear previous content
-      el.appendChild(errorDiv);
-    }
-
-    const plotLayout = {
-        plot_bgcolor: 'transparent',
-        paper_bgcolor: 'transparent',
-        font: { color: 'var(--muted)' },
-        xaxis: { gridcolor: 'rgba(255,255,255,0.05)' },
-        yaxis: { gridcolor: 'rgba(255,255,255,0.05)' }
-    };
-
-    // --- TAB NAVIGATION ---
-    document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click', ()=>{
-      document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      const t=b.dataset.tab; document.querySelectorAll('section.panel').forEach(s=>s.style.display='none'); document.getElementById(t).style.display='block';
-    }));
-
-    // --- STATS TAB ---
-    document.getElementById('calcStats').addEventListener('click', ()=>{
-      const arr = parseNums(document.getElementById('nums').value);
-      if(arr.length===0){ showError('กรุณากรอกตัวเลขอย่างน้อยหนึ่งตัว', 'statsOut'); return }
-      const out = {
-        'Mean': mean(arr).toFixed(4),
-        'Median': median(arr).toFixed(4),
-        'Mode': mode(arr),
-        'Variance': variance(arr).toFixed(4),
-        'StdDev': stddev(arr).toFixed(4),
-        'Count': arr.length
-      };
-      displayInPre('statsOut', JSON.stringify(out, null, 2));
-    });
-    document.getElementById('calcMA').addEventListener('click', ()=>{
-      const arr = parseNums(document.getElementById('nums').value);
-      const w = parseInt(document.getElementById('maWindow').value)||3;
-      if(arr.length===0){ showError('กรุณากรอกข้อมูล', 'statsOut'); return }
-      if(w<=0 || w>arr.length){ showError('ขนาดของ Window ต้องเป็นจำนวนเต็มบวก และไม่เกินจำนวนข้อมูลที่มี', 'statsOut'); return }
-      const ma = [];
-      for(let i=0;i<=arr.length-w;i++){ const win=arr.slice(i,i+w); ma.push((win.reduce((a,b)=>a+b,0)/w).toFixed(4)); }
-      displayInPre('statsOut', 'MA (window='+w+'):\n'+ma.join(', '));
-    });
-
-    // --- QUANT TAB ---
-    function linearRegression(x, y){ const n=x.length; const xm = mean(x); const ym = mean(y); let num=0, den=0; for(let i=0;i<n;i++){ num += (x[i]-xm)*(y[i]-ym); den += (x[i]-xm)**2; } if(den===0) return null; const slope = num/den; const intercept = ym - slope*xm; return {slope, intercept}; }
-    
-    document.getElementById('runLR').addEventListener('click', ()=>{
-      const xs = parseNums(document.getElementById('xs').value);
-      const ys = parseNums(document.getElementById('ys').value);
-      const predXVal = document.getElementById('predX').value.trim();
-      if(xs.length!==ys.length || xs.length<2){ showError('กรุณาใส่ข้อมูล X และ Y ให้มีจำนวนเท่ากัน และต้องมีข้อมูลอย่างน้อย 2 ชุด', 'lrResult'); return }
-      const lr = linearRegression(xs, ys);
-      if (!lr) {
-        showError('ไม่สามารถคำนวณ Regression ได้ เนื่องจากค่า X ทั้งหมดมีค่าเท่ากัน', 'lrResult');
-        return;
-      }
-      const res = { 'Slope': lr.slope, 'Intercept': lr.intercept };
-      if(predXVal!==''){ const px = parseFloat(predXVal); if(!isNaN(px)){ res['PredictY'] = (lr.slope*px + lr.intercept).toFixed(4) } else { res['PredictY'] = 'invalid input' } }
-      displayInPre('lrResult', JSON.stringify(res,null,2));
-
-      const lineY = xs.map(x=>lr.slope*x + lr.intercept);
-      const trace1 = { x: xs, y: ys, mode: 'markers', name:'Data' };
-      const trace2 = { x: xs, y: lineY, mode: 'lines', name:'Regression' };
-      const layout = {...plotLayout, title:'Scatter + Regression', xaxis:{...plotLayout.xaxis, title:'X'}, yaxis:{...plotLayout.yaxis, title:'Y'}};
-      Plotly.newPlot('lrPlot', [trace1, trace2], layout);
-    });
-
-    document.getElementById('calcEV').addEventListener('click', ()=>{
-      const outcomes = parseNums(document.getElementById('ev_outcomes').value);
-      const probs = parseNums(document.getElementById('ev_probs').value);
-      if(outcomes.length!==probs.length){ showError('จำนวน Outcomes และ Probabilities ต้องเท่ากัน', 'evOut'); return }
-      const sumP = probs.reduce((a,b)=>a+b,0);
-      if(Math.abs(sumP-1)>1e-6){ showError('ผลรวมของ Probabilities ทั้งหมดต้องเท่ากับ 1', 'evOut'); return }
-      let ev = 0; for(let i=0;i<outcomes.length;i++) ev += outcomes[i]*probs[i];
-      displayInPre('evOut', `Expected Value: ${ev.toFixed(4)}`);
-    });
-
-    document.getElementById('calcQuad').addEventListener('click', ()=>{
-        const a = parseFloat(document.getElementById('qa').value);
-      const b = parseFloat(document.getElementById('qb').value);
-      const c = parseFloat(document.getElementById('qc').value);
-      if(a===0){ showError('ค่า "a" ในสมการควาเดรติกต้องไม่เป็น 0', 'quadOut'); return }
-      const x_min = -b/(2*a); 
-      const y_min = a*x_min**2 + b*x_min + c;
-      displayInPre('quadOut', JSON.stringify({x_min: x_min.toFixed(4), y_min: y_min.toFixed(4)}, null, 2));
-    });
-
-    // --- ECON TAB ---
-    document.getElementById('calcEq').addEventListener('click', ()=>{
-      const a= parseFloat(document.getElementById('ea').value);
-      const b= parseFloat(document.getElementById('eb').value);
-      const c= parseFloat(document.getElementById('ec').value);
-      const d= parseFloat(document.getElementById('ed').value);
-      const denom = b + d; if(denom===0){ showError('พารามิเตอร์ไม่ถูกต้อง ทำให้ไม่สามารถหาจุดสมดุลได้ (b + d ต้องไม่เท่ากับ 0)', 'econOut'); return }
-      const P_eq = (a - c)/denom; const Q_eq = a - b*P_eq;
-      displayInPre('econOut', JSON.stringify({'Equilibrium Price (P_eq)':P_eq.toFixed(4),'Equilibrium Quantity (Q_eq)':Q_eq.toFixed(4)},null,2));
-    });
-
-    document.getElementById('calcElas').addEventListener('click', ()=>{
-        const a = parseFloat(document.getElementById('ea').value);
-      const b = parseFloat(document.getElementById('eb').value);
-      const P = parseFloat(document.getElementById('elasP').value);
-      const Q = a - b*P; if(Q===0){ showError('ที่ราคานี้ ปริมาณ (Q) เท่ากับ 0 ทำให้ไม่สามารถคำนวณความยืดหยุ่นได้', 'econOut'); return }
-      const elas = (-b) * (P / Q);
-      displayInPre('econOut', 'Elasticity = '+elas.toFixed(4));
-    });
-
-    document.getElementById('calcBE').addEventListener('click', ()=>{
-        const fc = parseFloat(document.getElementById('fc').value);
-      const vc = parseFloat(document.getElementById('vc').value);
-      const ppu = parseFloat(document.getElementById('ppu').value);
-      const margin = ppu - vc; if(margin<=0){ showError('ราคาต่อหน่วย (Price per Unit) ต้องมากกว่าต้นทุนผันแปร (Variable Cost)', 'beOut'); return }
-      const units = fc / margin; 
-      displayInPre('beOut', 'Break-even Units = '+units.toFixed(4));
-    });
-    document.getElementById('plotDS').addEventListener('click', ()=>{
-      const a= parseFloat(document.getElementById('ea').value);
-      const b= parseFloat(document.getElementById('eb').value);
-      const c= parseFloat(document.getElementById('ec').value);
-      const d= parseFloat(document.getElementById('ed').value);
-      const P_eq = (a - c)/(b + d);
-      const Pmax = Math.max(P_eq*1.6, 50);
-      const P = Array.from({length:100}, (_,i)=>i*(Pmax/99));
-      const Qd = P.map(p=>a - b*p);
-      const Qs = P.map(p=>c + d*p);
-      const traces = [ {x:P, y:Qd, mode:'lines', name:'Demand (Qd)'}, {x:P, y:Qs, mode:'lines', name:'Supply (Qs)'}, {x:[P_eq], y:[a - b*P_eq], mode:'markers', name:'Equilibrium', marker:{color:'var(--accent)', size:10}} ];
-      const layout = {...plotLayout, title:'Demand & Supply', xaxis:{...plotLayout.xaxis, title:'Price (P)'}, yaxis:{...plotLayout.yaxis, title:'Quantity (Q)'}};
-      Plotly.newPlot('dsPlot', traces, layout);
-    });
-
-    // --- INITIAL VALUES ---
-    document.getElementById('nums').value = '10 20 20 30 40';
-    document.getElementById('xs').value = '1 2 3 4 5';
-    document.getElementById('ys').value = '2 4 5 4 5';
-    document.getElementById('ev_outcomes').value = '100 200';
-    document.getElementById('ev_probs').value = '0.5 0.5';
-
-  });
-  </script>
+  <script src="script.js" defer></script>
 </body>
 </html>
-อีอ้วนนนน
