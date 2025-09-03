@@ -83,6 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
             details.appendChild(stepsDiv);
             
             container.appendChild(details);
+
+            // Render math formulas using KaTeX
+            if (window.renderMathInElement) {
+                renderMathInElement(stepsDiv, {
+                    delimiters: [ {left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false} ]
+                });
+            }
         }
 
         el.appendChild(container);
@@ -107,10 +114,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- TAB NAVIGATION ---
-    document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click', ()=>{
-      document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      const t=b.dataset.tab; document.querySelectorAll('section.panel').forEach(s=>s.style.display='none'); document.getElementById(t).style.display='block';
+    document.querySelectorAll('.tabbtn').forEach(button => button.addEventListener('click', () => {
+      // Remove 'active' class from all tab buttons
+      document.querySelectorAll('.tabbtn').forEach(btn => btn.classList.remove('active'));
+      // Add 'active' class to the clicked button
+      button.classList.add('active');
+      
+      // Hide all panels
+      document.querySelectorAll('section.panel').forEach(panel => panel.style.display = 'none');
+      // Show the target panel
+      document.getElementById(button.dataset.tab).style.display = 'block';
     }));
 
     // --- STATS TAB ---
@@ -130,19 +143,18 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       const answer = JSON.stringify(out, null, 2);
       const steps = `
-          <b>ค่าเฉลี่ย (Mean):</b>
-          <p>μ = (Σx) / n</p>
-          <p>μ = (${arr.join(' + ')}) / ${arr.length}</p>
-          <p>μ = ${arr.reduce((a,b)=>a+b,0)} / ${arr.length} = <b>${mu.toFixed(4)}</b></p>
+          <b>ค่าเฉลี่ย (Mean):</b> $$ \\mu = \\frac{\\sum x_i}{n} $$
+          <p>$$ \\mu = \\frac{${arr.join(' + ')}}{${arr.length}} $$</p>
+          <p>$$ \\mu = \\frac{${arr.reduce((a,b)=>a+b,0)}}{${arr.length}} = \\mathbf{${mu.toFixed(4)}} $$</p>
           <br>
           <b>ความแปรปรวน (Variance):</b>
-          <p>σ² = Σ(x - μ)² / n</p>
-          <p>σ² = ((${arr.map(x => `(${x.toFixed(2)} - ${mu.toFixed(2)})²`).join(' + ')})) / ${arr.length}</p>
-          <p>σ² = <b>${v.toFixed(4)}</b></p>
+          $$ \\sigma^2 = \\frac{\\sum(x_i - \\mu)^2}{n} $$
+          <p>$$ \\sigma^2 = \\frac{${arr.map(x => `(${x.toFixed(2)} - ${mu.toFixed(2)})^2`).join(' + ')}}{${arr.length}} $$</p>
+          <p>$$ \\sigma^2 = \\mathbf{${v.toFixed(4)}} $$</p>
           <br>
           <b>ส่วนเบี่ยงเบนมาตรฐาน (StdDev):</b>
-          <p>σ = √σ²</p>
-          <p>σ = √${v.toFixed(4)} = <b>${s.toFixed(4)}</b></p>
+          $$ \\sigma = \\sqrt{\\sigma^2} $$
+          <p>$$ \\sigma = \\sqrt{${v.toFixed(4)}} = \\mathbf{${s.toFixed(4)}} $$</p>
       `;
       displayResult('statsOut', { answer, steps });
     });
@@ -171,17 +183,59 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('ไม่สามารถคำนวณ Regression ได้ เนื่องจากค่า X ทั้งหมดมีค่าเท่ากัน', 'lrResult');
         return;
       }
+      const xm = mean(xs);
+      const ym = mean(ys);
+      let num = 0, den = 0;
+      for(let i=0; i<xs.length; i++){
+        num += (xs[i]-xm)*(ys[i]-ym);
+        den += (xs[i]-xm)**2;
+      }
       const res = { 'ความชัน (Slope)': lr.slope.toFixed(4), 'จุดตัดแกน Y (Intercept)': lr.intercept.toFixed(4) };
       if(predXVal!==''){ const px = parseFloat(predXVal); if(!isNaN(px)){ res['ค่าพยากรณ์ Y (Predict Y)'] = (lr.slope*px + lr.intercept).toFixed(4) } else { res['ค่าพยากรณ์ Y (Predict Y)'] = 'invalid input' } }
       const answer = JSON.stringify(res,null,2);
+
+      let calculationTable = `
+        <p><b>ตารางการคำนวณค่าต่างๆ:</b></p>
+        <table class="steps-table">
+          <thead>
+            <tr><th>i</th><th>xᵢ</th><th>yᵢ</th><th>(xᵢ - x̄)</th><th>(yᵢ - ȳ)</th><th>(xᵢ - x̄)²</th><th>(xᵢ - x̄)(yᵢ - ȳ)</th></tr>
+          </thead>
+          <tbody>`;
+      let sum_x_minus_xm_sq = 0;
+      let sum_xy_products = 0;
+      for(let i=0; i<xs.length; i++) {
+        const x_minus_xm = xs[i] - xm;
+        const y_minus_ym = ys[i] - ym;
+        const x_minus_xm_sq = x_minus_xm**2;
+        const xy_product = x_minus_xm * y_minus_ym;
+        sum_x_minus_xm_sq += x_minus_xm_sq;
+        sum_xy_products += xy_product;
+        calculationTable += `<tr><td>${i+1}</td><td>${xs[i]}</td><td>${ys[i]}</td><td>${x_minus_xm.toFixed(2)}</td><td>${y_minus_ym.toFixed(2)}</td><td>${x_minus_xm_sq.toFixed(2)}</td><td>${xy_product.toFixed(2)}</td></tr>`;
+      }
+      calculationTable += `
+          </tbody>
+          <tfoot>
+            <tr><td colspan="5"><b>ผลรวม (Σ)</b></td><td><b>${sum_x_minus_xm_sq.toFixed(4)}</b></td><td><b>${sum_xy_products.toFixed(4)}</b></td></tr>
+          </tfoot>
+        </table><br>`;
+
       const steps = `
-        <p>Slope (b) = Σ((xᵢ - x̄)(yᵢ - ȳ)) / Σ(xᵢ - x̄)²</p>
-        <p>Intercept (a) = ȳ - b*x̄</p>
-        <p>ค่าเฉลี่ย x̄ = ${mean(xs).toFixed(4)}</p>
-        <p>ค่าเฉลี่ย ȳ = ${mean(ys).toFixed(4)}</p>
-        <p>คำนวณ Slope (b) = <b>${lr.slope.toFixed(4)}</b></p>
-        <p>คำนวณ Intercept (a) = ${mean(ys).toFixed(4)} - ${lr.slope.toFixed(4)}*${mean(xs).toFixed(4)} = <b>${lr.intercept.toFixed(4)}</b></p>
-        <p><b>สมการ: y = ${lr.slope.toFixed(4)}x + ${lr.intercept.toFixed(4)}</b></p>
+        <p><b>1. คำนวณค่าเฉลี่ย:</b></p>
+        <p>ค่าเฉลี่ย x̄ = ${xm.toFixed(4)}</p>
+        <p>ค่าเฉลี่ย ȳ = ${ym.toFixed(4)}</p>
+        <br>
+        ${calculationTable}
+        <b>2. คำนวณความชัน (Slope, b):</b>
+        $$ b = \\frac{\\sum(x_i - \\bar{x})(y_i - \\bar{y})}{\\sum(x_i - \\bar{x})^2} $$
+        <p>$$ b = \\frac{${sum_xy_products.toFixed(4)}}{${sum_x_minus_xm_sq.toFixed(4)}} = \\mathbf{${lr.slope.toFixed(4)}} $$</p>
+        <br>
+        <b>3. คำนวณจุดตัดแกน Y (Intercept, a):</b>
+        $$ a = \\bar{y} - b\\bar{x} $$
+        <p>$$ a = ${ym.toFixed(4)} - (${lr.slope.toFixed(4)} \\times ${xm.toFixed(4)}) $$</p>
+        <p>$$ a = \\mathbf{${lr.intercept.toFixed(4)}} $$</p>
+        <br>
+        <b>4. สรุปสมการเส้นตรง:</b>
+        $$ \\mathbf{\\hat{y} = ${lr.intercept.toFixed(4)} + ${lr.slope.toFixed(4)}x} $$
       `;
       displayResult('lrResult', { answer, steps });
 
@@ -256,19 +310,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const minimaxRegretChoice = maxRegretInRows.indexOf(Math.min(...maxRegretInRows));
 
         const results = {
-            'Maximax (มองโลกในแง่ดี)': `เลือกทางเลือกที่ ${maximaxChoice + 1} (ค่า Payoff สูงสุดคือ ${maximaxValues[maximaxChoice]})`,
-            'Maximin (มองโลกในแง่ร้าย)': `เลือกทางเลือกที่ ${maximinChoice + 1} (ค่า Payoff ต่ำสุดที่สูงที่สุดคือ ${maximinValues[maximinChoice]})`,
-            'Laplace (ความน่าจะเป็นเท่ากัน)': `เลือกทางเลือกที่ ${laplaceChoice + 1} (ค่าเฉลี่ยสูงสุดคือ ${laplaceValues[laplaceChoice].toFixed(2)})`,
-            [`Hurwicz (alpha=${alpha})`]: `เลือกทางเลือกที่ ${hurwiczChoice + 1} (ค่าถ่วงน้ำหนักสูงสุดคือ ${hurwiczValues[hurwiczChoice].toFixed(2)})`,
-            'Minimax Regret (เสียโอกาสน้อยสุด)': `เลือกทางเลือกที่ ${minimaxRegretChoice + 1} (ค่าเสียโอกาสสูงสุดที่น้อยที่สุดคือ ${maxRegretInRows[minimaxRegretChoice]})`
+            'Maximax (มองโลกในแง่ดี)': `เลือกทางเลือกที่ ${maximaxChoice + 1} (ค่า Payoff สูงสุดคือ ${maximaxValues[maximaxChoice].toLocaleString()})`,
+            'Maximin (มองโลกในแง่ร้าย)': `เลือกทางเลือกที่ ${maximinChoice + 1} (ค่า Payoff ต่ำสุดที่สูงที่สุดคือ ${maximinValues[maximinChoice].toLocaleString()})`,
+            'Laplace (ความน่าจะเป็นเท่ากัน)': `เลือกทางเลือกที่ ${laplaceChoice + 1} (ค่าเฉลี่ยสูงสุดคือ ${laplaceValues[laplaceChoice].toFixed(2).toLocaleString()})`,
+            [`Hurwicz (alpha=${alpha})`]: `เลือกทางเลือกที่ ${hurwiczChoice + 1} (ค่าถ่วงน้ำหนักสูงสุดคือ ${hurwiczValues[hurwiczChoice].toFixed(2).toLocaleString()})`,
+            'Minimax Regret (เสียโอกาสน้อยสุด)': `เลือกทางเลือกที่ ${minimaxRegretChoice + 1} (ค่าเสียโอกาสสูงสุดที่น้อยที่สุดคือ ${maxRegretInRows[minimaxRegretChoice].toLocaleString()})`
         };
         const answer = JSON.stringify(results, null, 2);
+
+        let regretTableHtml = '<table class="steps-table"><thead><tr><th>ทางเลือก</th>';
+        for(let j=0; j<numStates; j++) { regretTableHtml += `<th>สภาวะที่ ${j+1}</th>`; }
+        regretTableHtml += '</tr></thead><tbody>';
+        regretMatrix.forEach((row, i) => {
+            regretTableHtml += `<tr><td>ทางเลือกที่ ${i+1}</td>`;
+            row.forEach(val => { regretTableHtml += `<td>${val.toLocaleString()}</td>`; });
+            regretTableHtml += '</tr>';
+        });
+        regretTableHtml += '</tbody></table>';
+
         const steps = `
-            <p><b>Maximax:</b> หาค่าสูงสุดของแต่ละแถว (${maximaxValues.join(', ')}) แล้วเลือกค่าที่มากที่สุด.</p>
-            <p><b>Maximin:</b> หาค่าต่ำสุดของแต่ละแถว (${maximinValues.join(', ')}) แล้วเลือกค่าที่มากที่สุด.</p>
-            <p><b>Laplace:</b> หาค่าเฉลี่ยของแต่ละแถว (${laplaceValues.map(v => v.toFixed(2)).join(', ')}) แล้วเลือกค่าที่มากที่สุด.</p>
-            <p><b>Hurwicz:</b> คำนวณ α*(max) + (1-α)*(min) ของแต่ละแถว (${hurwiczValues.map(v => v.toFixed(2)).join(', ')}) แล้วเลือกค่าที่มากที่สุด.</p>
-            <p><b>Minimax Regret:</b> สร้าง Regret Matrix แล้วหาค่าสูงสุดของแต่ละแถว (${maxRegretInRows.join(', ')}) จากนั้นเลือกค่าที่น้อยที่สุด.</p>
+            <b>1. Maximax (มองโลกในแง่ดี)</b>
+            <p>หาค่าสูงสุดของแต่ละทางเลือก แล้วเลือกทางเลือกที่ให้ค่าสูงสุด</p>
+            <ul>${maximaxValues.map((v, i) => `<li>ทางเลือกที่ ${i+1}: ค่าสูงสุดคือ ${v.toLocaleString()}</li>`).join('')}</ul>
+            <p>ค่าที่มากที่สุดคือ ${Math.max(...maximaxValues).toLocaleString()} ดังนั้น <b>${results['Maximax (มองโลกในแง่ดี)']}</b></p>
+            <br>
+            <b>2. Maximin (มองโลกในแง่ร้าย)</b>
+            <p>หาค่าต่ำสุดของแต่ละทางเลือก แล้วเลือกทางเลือกที่ให้ค่าสูงสุดในบรรดาค่าต่ำสุดเหล่านั้น</p>
+            <ul>${maximinValues.map((v, i) => `<li>ทางเลือกที่ ${i+1}: ค่าต่ำสุดคือ ${v.toLocaleString()}</li>`).join('')}</ul>
+            <p>ค่าที่มากที่สุดในกลุ่มนี้คือ ${Math.max(...maximinValues).toLocaleString()} ดังนั้น <b>${results['Maximin (มองโลกในแง่ร้าย)']}</b></p>
+            <br>
+            <b>3. Laplace (ความน่าจะเป็นเท่ากัน)</b>
+            <p>หาค่าเฉลี่ยของแต่ละทางเลือก แล้วเลือกทางเลือกที่ให้ค่าเฉลี่ยสูงสุด</p>
+            <ul>${laplaceValues.map((v, i) => `<li>ทางเลือกที่ ${i+1}: ค่าเฉลี่ยคือ ${v.toFixed(2).toLocaleString()}</li>`).join('')}</ul>
+            <p>ค่าเฉลี่ยสูงสุดคือ ${Math.max(...laplaceValues).toFixed(2).toLocaleString()} ดังนั้น <b>${results['Laplace (ความน่าจะเป็นเท่ากัน)']}</b></p>
+            <br>
+            <b>4. Hurwicz (alpha=${alpha})</b>
+            <p>คำนวณค่าถ่วงน้ำหนัก [α * (ค่าสูงสุด)] + [(1-α) * (ค่าต่ำสุด)] ของแต่ละทางเลือก แล้วเลือกค่าสูงสุด</p>
+            <ul>${hurwiczValues.map((v, i) => `<li>ทางเลือกที่ ${i+1}: (${alpha}*${Math.max(...matrix[i])}) + (${1-alpha}*${Math.min(...matrix[i])}) = ${v.toFixed(2).toLocaleString()}</li>`).join('')}</ul>
+            <p>ค่าถ่วงน้ำหนักสูงสุดคือ ${Math.max(...hurwiczValues).toFixed(2).toLocaleString()} ดังนั้น <b>${results[`Hurwicz (alpha=${alpha})`]}</b></p>
+            <br>
+            <b>5. Minimax Regret (ค่าเสียโอกาสน้อยที่สุด)</b>
+            <p>ขั้นตอนที่ 1: หาค่าที่ดีที่สุด (สูงสุด) ของแต่ละสภาวะการณ์ (แต่ละคอลัมน์): [${maxInCols.join(', ')}]</p>
+            <p>ขั้นตอนที่ 2: สร้างตารางค่าเสียโอกาส (Regret Matrix) โดยนำค่าที่ดีที่สุดของคอลัมน์นั้นๆ ลบด้วยค่าในแต่ละช่อง</p>
+            ${regretTableHtml}
+            <p>ขั้นตอนที่ 3: หาค่าเสียโอกาสที่สูงสุดของแต่ละทางเลือก (แต่ละแถว): [${maxRegretInRows.join(', ')}]</p>
+            <p>ขั้นตอนที่ 4: เลือกทางเลือกที่มีค่าเสียโอกาสสูงสุดที่น้อยที่สุด คือ ${Math.min(...maxRegretInRows).toLocaleString()} ดังนั้น <b>${results['Minimax Regret (เสียโอกาสน้อยสุด)']}</b></p>
         `;
         displayResult('payoffOut', { answer, steps });
     });
@@ -503,7 +589,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const delta = b * b - 4 * a * c;
         const vertex_x = -b / (2 * a);
         const vertex_y = a * vertex_x**2 + b * vertex_x + c;
-        let steps = `<p>จาก ax² + bx + c = 0</p><p>a=${a}, b=${b}, c=${c}</p><br>`;
+        let steps = `<p>จาก ax² + bx + c = 0</p><p>a=${a}, b=${b}, c=${c}</p><br>
+        <b>1. หาจุดยอด (Vertex):</b>
+        <p>สูตร: x = -b / 2a</p>
+        <p>x = -(${b}) / (2 * ${a}) = <b>${vertex_x.toFixed(4)}</b></p>
+        <p>แทนค่า x ในสมการเพื่อหา y:</p>
+        <p>y = ${a}(${vertex_x.toFixed(4)})² + ${b}(${vertex_x.toFixed(4)}) + ${c} = <b>${vertex_y.toFixed(4)}</b></p>
+        <br>
+        <b>2. หาคำตอบของสมการ (Roots):</b>
+        <p>ใช้สูตร: x = [-b ± √(b²-4ac)] / 2a</p>`;
         let result = {
             'รูปแบบสมการ': `${a}x² + ${b}x + ${c} = 0`,
             'จุดยอด (Vertex)': `(${vertex_x.toFixed(4)}, ${vertex_y.toFixed(4)})`,
@@ -511,8 +605,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'คำตอบ (Roots)': ''
         };
 
-        steps += `<p><b>หาคำตอบ (Roots) จากสูตร x = [-b ± √(b²-4ac)] / 2a</b></p>`;
-        steps += `<p>b²-4ac (delta) = ${b}² - 4(${a})(${c}) = ${delta}</p>`;
+        steps += `<p>คำนวณค่า Discriminant (Δ = b²-4ac):</p>`;
+        steps += `<p>Δ = (${b})² - 4(${a})(${c}) = ${delta}</p>`;
 
         if (delta > 0) {
             const x1 = (-b + Math.sqrt(delta)) / (2 * a);
@@ -703,15 +797,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const n = parseFloat(document.getElementById('fv_n').value);
         const t = parseFloat(document.getElementById('fv_t').value);
 
-        if (isNaN(P) || isNaN(r) || isNaN(n) || isNaN(t)) {
+        if (isNaN(P) || isNaN(r_percent) || isNaN(n) || isNaN(t)) {
             showError('กรุณากรอกข้อมูลให้ครบถ้วน', 'fvOut'); return;
         }
-        if (P < 0 || r < 0 || n <= 0 || t < 0) {
+        if (P < 0 || r_percent < 0 || n <= 0 || t < 0) {
             showError('กรุณากรอกค่าที่ไม่ติดลบ (n ต้องมากกว่า 0)', 'fvOut'); return;
         }
 
         const r = r_percent / 100;
-        const A = P * Math.pow((1 + r / n), n * t);
+        const nt = n * t;
+        const r_div_n = r / n;
+        const base = 1 + r_div_n;
+        const A = P * Math.pow(base, nt);
         const totalInterest = A - P;
 
         const answerObj = {
@@ -720,14 +817,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const answer = JSON.stringify(answerObj, null, 2);
         const steps = `
-            <p>สูตรมูลค่าอนาคต: FV = P * (1 + r/n)<sup>(n*t)</sup></p>
-            <p>FV = ${P.toLocaleString()} * (1 + ${r}/${n})<sup>(${n}*${t})</sup></p>
-            <p>FV = ${P.toLocaleString()} * (${(1 + r / n).toFixed(6)})<sup>(${n*t})</sup></p>
-            <p><b>FV = ${answerObj['มูลค่าในอนาคต (Future Value)']}</b></p>
+            <b>สูตรมูลค่าอนาคต:</b> $$ FV = P \\left(1 + \\frac{r}{n}\\right)^{nt} $$
+            <p>$$ FV = ${P.toLocaleString()} \\times \\left(1 + \\frac{${r}}{${n}}\\right)^{${n} \\times ${t}} $$</p>
+            <p>$$ FV = ${P.toLocaleString()} \\times (${(1 + r / n).toFixed(6)})^{${n*t}} $$</p>
+            <p>$$ \\mathbf{FV = ${answerObj['มูลค่าในอนาคต (Future Value)']}} $$</p>
             <br>
-            <p>สูตรดอกเบี้ยทั้งหมด: Total Interest = FV - P</p>
-            <p>Total Interest = ${answerObj['มูลค่าในอนาคต (Future Value)']} - ${P.toLocaleString()}</p>
-            <p><b>Total Interest = ${answerObj['ดอกเบี้ยทั้งหมด (Total Interest)']}</b></p>
+            <b>สูตรดอกเบี้ยทั้งหมด:</b> $$ I = FV - P $$
+            <p>$$ I = ${answerObj['มูลค่าในอนาคต (Future Value)']} - ${P.toLocaleString()} $$</p>
+            <p>$$ \\mathbf{I = ${answerObj['ดอกเบี้ยทั้งหมด (Total Interest)']}} $$</p>
         `;
         displayResult('fvOut', { answer, steps });
     });
@@ -775,11 +872,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = annualRate / 100 / nPerYear;
         const n = t * nPerYear;
         let pmt;
+        let numerator, denominator;
 
         if (r === 0) { // No interest
             pmt = P / n;
         } else {
-            pmt = P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+            numerator = r * Math.pow(1 + r, n);
+            denominator = Math.pow(1 + r, n) - 1;
+            pmt = P * (numerator / denominator);
         }
         
         const totalPayment = pmt * n;
@@ -792,13 +892,24 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const answer = JSON.stringify(answerObj, null, 2);
         const steps = `
-            <p>r (อัตราดอกเบี้ยต่องวด) = ${annualRate}% / ${nPerYear} = ${r.toFixed(6)}</p>
+            <p><b>1. เตรียมตัวแปร:</b></p>
+            <p>P (เงินต้น) = ${P.toLocaleString()}</p>
+            <p>r (อัตราดอกเบี้ยต่องวด) = ${annualRate}% / ${nPerYear} = ${r.toFixed(8)}</p>
             <p>n (จำนวนงวดทั้งหมด) = ${t} ปี * ${nPerYear} = ${n}</p>
-            <p>สูตรค่างวด: PMT = P * [r(1+r)ⁿ] / [(1+r)ⁿ - 1]</p>
-            <p>PMT = ${P.toLocaleString()} * [${r.toFixed(6)}(1+${r.toFixed(6)})<sup>${n}</sup>] / [(1+${r.toFixed(6)})<sup>${n}</sup> - 1]</p>
-            <p><b>PMT = ${answerObj['ค่างวด (Payment)']}</b></p>
             <br>
-            <p>ยอดชำระทั้งหมด = PMT * n = ${answerObj['ค่างวด (Payment)']} * ${n} = <b>${answerObj['ยอดชำระทั้งหมด']}</b></p>`;
+            <p><b>2. คำนวณค่างวด (PMT):</b></p>
+            <p>สูตรค่างวด: PMT = P * [r(1+r)ⁿ] / [(1+r)ⁿ - 1]</p>
+            ${r > 0 ? `
+            <p>คำนวณตัวเศษของเศษส่วน: r(1+r)ⁿ = ${r.toFixed(8)} * (1+${r.toFixed(8)})<sup>${n}</sup> = ${numerator.toFixed(8)}</p>
+            <p>คำนวณตัวส่วนของเศษส่วน: (1+r)ⁿ - 1 = (1+${r.toFixed(8)})<sup>${n}</sup> - 1 = ${denominator.toFixed(8)}</p>
+            <p>แทนค่า: PMT = ${P.toLocaleString()} * (${numerator.toFixed(8)} / ${denominator.toFixed(8)})</p>
+            ` : ''}
+            <p><b>PMT = ${pmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></p>
+            <br>
+            <p><b>3. คำนวณยอดรวม:</b></p>
+            <p>ยอดชำระทั้งหมด = PMT * n = ${pmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} * ${n} = <b>${totalPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></p>
+            <p>ดอกเบี้ยทั้งหมด = ยอดชำระทั้งหมด - P = ${totalPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - ${P.toLocaleString()} = <b>${totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></p>
+        `;
         displayResult('loanOut', { answer, steps });
     });
 
@@ -816,14 +927,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       let npv = 0;
+      const pv_terms = [];
       cashFlows.forEach((cf, index) => {
-          npv += cf / Math.pow(1 + rate, index);
+          const pv = cf / Math.pow(1 + rate, index);
+          pv_terms.push(pv);
+          npv += pv;
       });
       const answer = `มูลค่าปัจจุบันสุทธิ (NPV): ${npv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       const steps = `
-        <p>NPV = Σ [CFₜ / (1+r)ᵗ]</p>
-        <p>NPV = ${cashFlows.map((cf, t) => `${cf}/(1+${rate})<sup>${t}</sup>`).join(' + ')}</p>
-        <p><b>NPV = ${answer.split(': ')[1]}</b></p>
+        <p><b>1. คำนวณมูลค่าปัจจุบัน (PV) ของกระแสเงินสดแต่ละงวด:</b></p>
+        <p>สูตร: PV = CFₜ / (1+r)ᵗ</p>
+        ${cashFlows.map((cf, t) => `<p>งวดที่ ${t}: ${cf.toLocaleString()} / (1 + ${rate})<sup>${t}</sup> = ${pv_terms[t].toLocaleString(undefined, {minimumFractionDigits: 4})}</p>`).join('')}
+        <br>
+        <p><b>2. รวมมูลค่าปัจจุบันทั้งหมดเพื่อหา NPV:</b></p>
+        <p>NPV = ${pv_terms.map(pv => pv.toLocaleString(undefined, {minimumFractionDigits: 4})).join(' + ')}</p>
+        <p><b>NPV = ${npv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></p>
+        <br>
+        <p><b>3. สรุปผล:</b></p>
         <p>${npv > 0 ? 'NPV > 0: โครงการน่าลงทุน' : (npv < 0 ? 'NPV < 0: โครงการไม่น่าลงทุน' : 'NPV = 0: จุดคุ้มทุน')}</p>
       `;
       displayResult('npvOut', { answer, steps });
@@ -877,7 +997,27 @@ document.addEventListener('DOMContentLoaded', () => {
             'คำแนะนำ': 'นำค่า t-statistic ไปเปรียบเทียบกับค่าวิกฤต (critical value) จากตาราง t-distribution ที่ระดับนัยสำคัญ (alpha) และ df ที่คำนวณได้ เพื่อตัดสินใจปฏิเสธหรือยอมรับสมมติฐานหลัก (H₀: μ₁ = μ₂)'
         };
         const answer = JSON.stringify(answerObj, null, 2);
-        const steps = `<p>t = (x̄₁ - x̄₂) / √(s₁²/n₁ + s₂²/n₂)</p><p>t = (${mean1.toFixed(2)} - ${mean2.toFixed(2)}) / √(${var1.toFixed(2)}/${n1} + ${var2.toFixed(2)}/${n2}) = <b>${t_stat.toFixed(4)}</b></p>`;
+        const steps = `
+            <p><b>1. คำนวณค่าสถิติพื้นฐานของแต่ละกลุ่ม:</b></p>
+            <p><u>กลุ่มที่ 1:</u></p>
+            <p>ขนาดตัวอย่าง (n₁): ${n1}</p>
+            <p>ค่าเฉลี่ย (x̄₁): ${mean1.toFixed(4)}</p>
+            <p>ความแปรปรวนของกลุ่มตัวอย่าง (s₁²): ${var1.toFixed(4)}</p>
+            <p><u>กลุ่มที่ 2:</u></p>
+            <p>ขนาดตัวอย่าง (n₂): ${n2}</p>
+            <p>ค่าเฉลี่ย (x̄₂): ${mean2.toFixed(4)}</p>
+            <p>ความแปรปรวนของกลุ่มตัวอย่าง (s₂²): ${var2.toFixed(4)}</p>
+            <br>
+            <p><b>2. คำนวณค่าสถิติทดสอบ (t-statistic):</b></p>
+            <p>สูตร: t = (x̄₁ - x̄₂) / √(s₁²/n₁ + s₂²/n₂)</p>
+            <p>t = (${mean1.toFixed(4)} - ${mean2.toFixed(4)}) / √(${var1.toFixed(4)}/${n1} + ${var2.toFixed(4)}/${n2})</p>
+            <p><b>t = ${t_stat.toFixed(4)}</b></p>
+            <br>
+            <p><b>3. คำนวณองศาอิสระ (Degrees of Freedom):</b></p>
+            <p>ใช้สูตรของ Welch-Satterthwaite:</p>
+            <p>df ≈ (s₁²/n₁ + s₂²/n₂)² / [ (s₁²/n₁)²/(n₁-1) + (s₂²/n₂)²/(n₂-1) ]</p>
+            <p><b>df ≈ ${df.toFixed(4)}</b></p>
+        `;
         displayResult('ttestOut', { answer, steps });
     });
 
@@ -901,8 +1041,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let chi2_stat = 0;
+        const terms = [];
         for (let i = 0; i < obs.length; i++) {
-            chi2_stat += Math.pow(obs[i] - exp[i], 2) / exp[i];
+            const term = Math.pow(obs[i] - exp[i], 2) / exp[i];
+            terms.push(term);
+            chi2_stat += term;
         }
         const df = obs.length - 1;
         const answerObj = {
@@ -911,7 +1054,19 @@ document.addEventListener('DOMContentLoaded', () => {
             'คำแนะนำ': 'นำค่า Chi-Square Statistic ไปเปรียบเทียบกับค่าวิกฤตจากตาราง Chi-Square ที่ระดับนัยสำคัญ (alpha) และ df ที่คำนวณได้ เพื่อทดสอบ Goodness-of-Fit'
         };
         const answer = JSON.stringify(answerObj, null, 2);
-        const steps = `<p>χ² = Σ [ (Oᵢ - Eᵢ)² / Eᵢ ]</p><p>χ² = ${obs.map((o, i) => `(${o}-${exp[i]})²/(${exp[i]})`).join(' + ')}</p><p><b>χ² = ${chi2_stat.toFixed(4)}</b></p>`;
+        const steps = `
+            <p><b>1. คำนวณค่า (Oᵢ - Eᵢ)² / Eᵢ สำหรับแต่ละกลุ่ม:</b></p>
+            ${obs.map((o, i) => `<p>กลุ่มที่ ${i+1}: (${o} - ${exp[i]})² / ${exp[i]} = ${terms[i].toFixed(4)}</p>`).join('')}
+            <br>
+            <p><b>2. คำนวณค่าสถิติไคสแควร์ (χ²):</b></p>
+            <p>สูตร: χ² = Σ [ (Oᵢ - Eᵢ)² / Eᵢ ]</p>
+            <p>χ² = ${terms.map(t => t.toFixed(4)).join(' + ')}</p>
+            <p><b>χ² = ${chi2_stat.toFixed(4)}</b></p>
+            <br>
+            <p><b>3. คำนวณองศาอิสระ (df):</b></p>
+            <p>df = k - 1 (เมื่อ k คือจำนวนกลุ่ม)</p>
+            <p>df = ${obs.length} - 1 = <b>${df}</b></p>
+        `;
         displayResult('chiOut', { answer, steps });
     });
 
