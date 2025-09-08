@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - POTSUN</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <button id="theme-toggle-btn" class="theme-toggle" title="สลับธีม">
+                <span class="sun-icon">☀️</span>
+                <span class="moon-icon">🌙</span>
+            </button>
+            <h1>POTSUN</h1>
+            <p class="login-subtitle">กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
+
+            <!-- Login Form -->
+            <form id="login-form" novalidate>
+                <div class="input-group">
+                    <label for="username">ชื่อผู้ใช้</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">รหัสผ่าน</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <p id="login-error-message" class="error-message" style="display: none;"></p>
+                <button type="submit" class="btn login-btn">เข้าสู่ระบบ</button>
+                <p class="toggle-link">ยังไม่มีบัญชี? <a href="#" id="show-register">สมัครสมาชิก</a></p>
+            </form>
+
+            <!-- Register Form (hidden by default) -->
+            <form id="register-form" style="display: none;" novalidate>
+                <div class="input-group">
+                    <label for="register-username">ชื่อผู้ใช้</label>
+                    <input type="text" id="register-username" name="register-username" required>
+                </div>
+                <div class="input-group">
+                    <label for="register-password">รหัสผ่าน</label>
+                    <input type="password" id="register-password" name="register-password" required>
+                </div>
+                <div class="input-group">
+                    <label for="confirm-password">ยืนยันรหัสผ่าน</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+                </div>
+                <p id="register-message" style="display: none;"></p>
+                <button type="submit" class="btn login-btn">สมัครสมาชิก</button>
+                <p class="toggle-link">มีบัญชีแล้ว? <a href="#" id="show-login">เข้าสู่ระบบ</a></p>
+            </form>
+        </div>
+    </div>
+    <script src="login.js"></script>
+</body>
+</html>
