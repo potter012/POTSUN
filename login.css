@@ -1,0 +1,77 @@
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+    background-color: var(--panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 30px var(--shadow-color), 0 0 20px var(--accent-shadow-color);
+    text-align: center;
+    position: relative; /* Add relative positioning to contain the theme toggle */
+}
+
+/* Position the theme toggle button at the top-right corner */
+.login-box .theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.login-box h1 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 28px;
+    font-weight: 600;
+    text-shadow: 0 0 12px var(--accent-shadow-color);
+}
+
+.login-subtitle {
+    color: var(--muted);
+    margin-top: 0;
+    margin-bottom: 24px;
+}
+
+#login-form .input-group, #register-form .input-group {
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.login-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.toggle-link {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.toggle-link a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.toggle-link a:hover {
+    text-decoration: underline;
+}
+
+.success-message {
+  color: #a7f3d0; /* green-200 */
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
