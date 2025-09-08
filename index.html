@@ -5,14 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>POTSUN</title>
   <meta name="description" content="เครื่องมือวิเคราะห์เชิงปริมาณและเศรษฐศาสตร์ ทำงานบนเบราว์เซอร์ ไม่ต้องใช้เซิร์ฟเวอร์" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://cdn.plot.ly">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+  <!-- KaTeX for beautiful math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0KOVEMckDpbDMBIZB0Ax10A6JLlSp4rMA+zA" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+  <!-- Defer loading of large libraries to prevent render blocking -->
+  <script defer src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+  <script>
+    // สคริปต์นี้จะทำงานก่อนที่หน้าเว็บจะโหลดเสร็จ
+    // เพื่อตรวจสอบสถานะการล็อกอินจาก sessionStorage
+    // หากไม่พบสถานะ จะส่งผู้ใช้กลับไปที่หน้า login.html
+    // หมายเหตุ: นี่คือการป้องกันฝั่ง Client-side เท่านั้น และควรมีการตรวจสอบที่ฝั่ง Server ด้วยเพื่อความปลอดภัยสูงสุด
+    if (!sessionStorage.getItem('isLoggedIn')) {
+      window.location.href = 'login.html';
+    }
+  </script>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>POTSUN Analytics</h1>
+      <h1>POTSUN</h1>
+      <button id="theme-toggle-btn" class="theme-toggle" title="สลับธีม">
+        <span class="sun-icon">☀️</span>
+        <span class="moon-icon">🌙</span>
+      </button>
+      <button id="logout-btn" class="icon-btn" title="ออกจากระบบ" aria-label="ออกจากระบบ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path fill-rule="evenodd" d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z" clip-rule="evenodd" /></svg>
+      </button>
       <nav>
         <button class="tabbtn active" data-tab="stats">สถิติธุรกิจ</button>
         <button class="tabbtn" data-tab="quant">วิเคราะห์เชิงปริมาณ</button>
@@ -24,22 +47,39 @@
     </header>
 
 
-    <section id="stats" class="panel">
-      <h2>สถิติพื้นฐาน</h2>
-      <label for="nums">ชุดข้อมูล (คั่นด้วยคอมมา หรือช่องว่าง)</label>
-      <textarea id="nums" placeholder="เช่น 1200, 1500, 1700, 2000"></textarea>
-      <div class="btn-group">
-        <button class="btn" id="calcStats">คำนวณสถิติพื้นฐาน</button>
-        <button class="btn" id="calcMA">คำนวณค่าเฉลี่ยเคลื่อนที่ (MA)</button>
-        <label for="maWindow" style="margin-left: 8px; margin-bottom: 0;">ขนาด Window:</label>
-        <input id="maWindow" type="number" value="3" min="1" class="inline-input" style="width: 80px;">
+    <section id="stats" class="panel active">
+      <h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h2-icon"><path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" /><path fill-rule="evenodd" d="M9.344 3.071a.75.75 0 015.312 0l1.75 1.75a.75.75 0 11-1.06 1.06L13.5 4.06v1.568a6.75 6.75 0 11-3 0V4.06L8.656 5.881a.75.75 0 11-1.06-1.06l1.75-1.75z" clip-rule="evenodd" /></svg>สถิติธุรกิจ</h2>
+      <div class="control-group">
+        <label for="nums">ชุดข้อมูล (คั่นด้วยคอมมา หรือช่องว่าง)</label>
+        <textarea id="nums" placeholder="เช่น 1200, 1500, 1700, 2000"></textarea>
+      </div>
+
+      <div class="calculation-groups">
+        <div class="calculation-group">
+            <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path fill-rule="evenodd" d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z" clip-rule="evenodd" /></svg>สถิติพรรณนา</h3>
+            <p class="muted-text">คำนวณค่ากลาง, การกระจาย, และอื่นๆ จากชุดข้อมูลทั้งหมด</p>
+            <div class="btn-group">
+                <button class="btn-secondary" id="plotHistogram">สร้าง Histogram</button>
+                <button class="btn" id="calcStats">คำนวณสถิติพื้นฐาน</button>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M3.375 4.5C2.339 4.5 1.5 5.34 1.5 6.375V17.625c0 1.036.84 1.875 1.875 1.875h17.25c1.035 0 1.875-.84 1.875-1.875V6.375c0-1.036-.84-1.875-1.875-1.875H3.375zM9 6.75h6.75a.75.75 0 010 1.5H9a.75.75 0 010-1.5zm0 3h6.75a.75.75 0 010 1.5H9a.75.75 0 010-1.5zm0 3h6.75a.75.75 0 010 1.5H9a.75.75 0 010-1.5z" /></svg>ค่าเฉลี่ยเคลื่อนที่ (MA)</h3>
+            <p class="muted-text">คำนวณค่าเฉลี่ยของชุดข้อมูลย่อยตามขนาด Window ที่กำหนด</p>
+            <div class="btn-group">
+                <label for="maWindow">ขนาด Window:</label>
+                <input id="maWindow" type="number" value="3" min="1" class="inline-input">
+                <button class="btn" id="calcMA">คำนวณ</button>
+            </div>
+        </div>
       </div>
       <div id="statsOut" class="output-container"></div>
+      <div id="statsPlot" class="plot-container" style="margin-top: 16px; display: none;"></div>
     </section>
 
 
-    <section id="quant" class="panel" style="display:none">
-      <h2>วิเคราะห์เชิงปริมาณ</h2>
+    <section id="quant" class="panel">
+      <h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h2-icon"><path d="M18.75 3.75h-3.75a.75.75 0 000 1.5h3.75a.75.75 0 000-1.5zM12.75 8.25h6a.75.75 0 000-1.5h-6a.75.75 0 000 1.5zM12.75 12h6a.75.75 0 000-1.5h-6a.75.75 0 000 1.5zM12.75 15.75h6a.75.75 0 000-1.5h-6a.75.75 0 000 1.5zM5.25 3.75a2.25 2.25 0 00-2.25 2.25v12a2.25 2.25 0 002.25 2.25h13.5a2.25 2.25 0 002.25-2.25v-12a2.25 2.25 0 00-2.25-2.25H5.25zM4.5 18V6a.75.75 0 01.75-.75h13.5a.75.75 0 01.75.75v12a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75z" /></svg>วิเคราะห์เชิงปริมาณ</h2>
       <div class="row">
         <div>
           <label for="xs">ค่า X (คั่นด้วยคอมมา/ช่องว่าง)</label>
@@ -59,7 +99,7 @@
         <div>
           <div id="lrResult"></div>
           <hr>
-          <h3>ค่าคาดหวัง (Expected Value)</h3>
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path fill-rule="evenodd" d="M11.828 2.25c-.916 0-1.699.663-1.85 1.54l-1.2 8.655a.75.75 0 00.279.678l4.013 3.58a.75.75 0 001.032-.242l3.18-5.452a.75.75 0 00-.227-.996l-4.755-3.17A1.99 1.99 0 0011.828 2.25zM3 3.75A.75.75 0 013.75 3h4.5a.75.75 0 010 1.5h-4.5A.75.75 0 013 3.75zM3.75 7.5a.75.75 0 000 1.5h3.75a.75.75 0 000-1.5H3.75zM3 12.75a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM3.75 16.5a.75.75 0 000 1.5h3.75a.75.75 0 000-1.5H3.75z" clip-rule="evenodd" /></svg>ค่าคาดหวัง (Expected Value)</h3>
           <label for="ev_outcomes">ผลลัพธ์ (Outcomes)</label>
           <input id="ev_outcomes" placeholder="100 200">
           <label for="ev_probs">ความน่าจะเป็น (Probabilities, ผลรวม=1)</label>
@@ -67,10 +107,27 @@
           <div class="btn-group"><button class="btn" id="calcEV">คำนวณ EV</button></div>
           <div id="evOut" class="output-container"></div>
           <hr>
-          <h3>การวิเคราะห์การตัดสินใจ (Payoff Matrix)</h3>
-          <p style="color:var(--muted); margin-top:0;">ป้อนข้อมูล Payoff โดยแต่ละแถวคือทางเลือก (Alternative) และแต่ละคอลัมน์คือสภาวะการณ์ (State of Nature)</p>
-          <label for="payoff_matrix">Payoff Matrix (คั่นด้วยช่องว่าง, ขึ้นบรรทัดใหม่สำหรับแต่ละทางเลือก)</label>
-          <textarea id="payoff_matrix" placeholder="10 20 30&#10;15 25 10&#10;5 40 20"></textarea>
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5a.75.75 0 000 1.5h15a.75.75 0 000-1.5V3.75a.75.75 0 000-1.5h-15zM9 6a.75.75 0 000 1.5h6a.75.75 0 000-1.5H9zm-1.5 3.75a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zM9 15a.75.75 0 000 1.5h6a.75.75 0 000-1.5H9z" clip-rule="evenodd" /></svg>การวิเคราะห์การตัดสินใจ (Payoff Matrix)</h3>
+          <p style="color:var(--muted); margin-top:0;">สร้างตาราง Payoff เพื่อวิเคราะห์ทางเลือกภายใต้สภาวะการณ์ต่างๆ</p>
+          
+          <div id="payoff-builder">
+            <div class="btn-group" style="justify-content: flex-end; margin-bottom: 12px;">
+              <label>สภาวะการณ์ (Columns):</label>
+              <button class="btn-secondary btn-add" id="addPayoffState" title="เพิ่มสภาวะการณ์">+</button>
+              <button class="btn-secondary btn-remove" id="removePayoffState" title="ลบสภาวะการณ์">-</button>
+            </div>
+            <div class="payoff-grid-wrapper">
+              <div id="payoff-grid">
+                <!-- Payoff table will be built by JS here -->
+              </div>
+            </div>
+            <div class="btn-group" style="margin-top: 12px;">
+              <label>ทางเลือก (Rows):</label>
+              <button class="btn-secondary btn-add" id="addPayoffAlt" title="เพิ่มทางเลือก">+</button>
+              <button class="btn-secondary btn-remove" id="removePayoffAlt" title="ลบทางเลือก">-</button>
+            </div>
+          </div>
+
           <div class="btn-group">
             <button class="btn" id="calcPayoff">วิเคราะห์</button>
             <label for="hurwicz_alpha" style="margin-left: 8px; margin-bottom: 0;">Alpha (Hurwicz):</label>
@@ -79,56 +136,126 @@
           <div id="payoffOut" class="output-container"></div>
 
 
-          <hr>
-          <h3>การแจกแจงความน่าจะเป็น (Probability Distributions)</h3>
 
-          <h4 style="margin-top: 16px;">การแจกแจงทวินาม (Binomial)</h4>
-          <p style="color:var(--muted); margin-top:0;">P(X=x) = C(n,x) * pˣ * (1-p)ⁿ⁻ˣ</p>
-          <div class="row">
-            <div>
-              <label for="bino_n">จำนวนครั้งที่ทดลอง (n)</label>
-              <input id="bino_n" type="number" value="10">
+          <hr>
+          <div class="calculation-groups">
+            <div class="calculation-group">
+              <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>การแจกแจงทวินาม (Binomial)</h3>
+              <p class="muted-text">P(X=x) = C(n,x) * pˣ * (1-p)ⁿ⁻ˣ</p>
+              <div class="finance-input-grid">
+                <label for="bino_n">จำนวนครั้งที่ทดลอง (n)</label>
+                <input id="bino_n" type="number" value="10">
+                <label for="bino_p">ความน่าจะเป็น (p)</label>
+                <input id="bino_p" type="number" value="0.5" step="0.01" min="0" max="1">
+                <label for="bino_x">จำนวนครั้งที่สำเร็จ (x)</label>
+                <input id="bino_x" type="number" value="5">
+              </div>
+              <div class="btn-group"><button class="btn" id="calcBino">คำนวณ</button></div>
+              <div id="binoOut" class="output-container"></div>
             </div>
-            <div>
-              <label for="bino_p">ความน่าจะเป็นที่จะสำเร็จ (p)</label>
-              <input id="bino_p" type="number" value="0.5" step="0.01" min="0" max="1">
-            </div>
-            <div>
-              <label for="bino_x">จำนวนครั้งที่สำเร็จ (x)</label>
-              <input id="bino_x" type="number" value="5">
+            <div class="calculation-group">
+              <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>การแจกแจงปัวซง (Poisson)</h3>
+              <p class="muted-text">P(X=x) = (λˣ * e⁻ˡ) / x!</p>
+              <div class="finance-input-grid">
+                <label for="poisson_l">ค่าเฉลี่ย (λ)</label><input id="poisson_l" type="number" value="3">
+                <label for="poisson_x">จำนวนเหตุการณ์ (x)</label><input id="poisson_x" type="number" value="2">
+              </div>
+              <div class="btn-group"><button class="btn" id="calcPoisson">คำนวณ</button></div>
+              <div id="poissonOut" class="output-container"></div>
             </div>
           </div>
-          <div class="btn-group"><button class="btn" id="calcBino">คำนวณ</button></div>
-          <div id="binoOut" class="output-container"></div>
-          
-          <h4 style="margin-top: 16px;">การแจกแจงปัวซง (Poisson)</h4>
-          <p style="color:var(--muted); margin-top:0;">P(X=x) = (λˣ * e⁻ˡ) / x!</p>
-          <div class="row">
-            <div><label for="poisson_l">ค่าเฉลี่ย (λ)</label><input id="poisson_l" type="number" value="3"></div>
-            <div><label for="poisson_x">จำนวนเหตุการณ์ (x)</label><input id="poisson_x" type="number" value="2"></div>
-          </div>
-          <div class="btn-group"><button class="btn" id="calcPoisson">คำนวณ</button></div>
-          <div id="poissonOut" class="output-container"></div>
         </div>
         <div>
           <div id="lrPlot" class="plot-container"></div>
         </div>
       </div>
       <hr>
-      <h3>พล็อตกราฟและหาค่าที่เหมาะสม (Function Plotter & Optimizer)</h3>
-      <label for="func_expr">นิพจน์ฟังก์ชัน (ใช้ x เป็นตัวแปร)</label>
-      <input id="func_expr" type="text" placeholder="เช่น -x^2 + 4*x">
-      <div class="row">
-        <div><label for="func_min_x">ช่วง x ต่ำสุด</label><input id="func_min_x" type="number" value="-10"></div>
-        <div><label for="func_max_x">ช่วง x สูงสุด</label><input id="func_max_x" type="number" value="10"></div>
+      <div class="grid2">
+        <div>
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M3.375 3C2.339 3 1.5 3.84 1.5 4.875v.75c0 1.036.84 1.875 1.875 1.875h17.25c1.035 0 1.875-.84 1.875-1.875v-.75C22.5 3.839 21.66 3 20.625 3H3.375z" /><path fill-rule="evenodd" d="M3.087 9l.54 9.176A3 3 0 006.62 21h10.757a3 3 0 002.995-2.824L20.913 9H3.087zm6.163 3.75a.75.75 0 01.75-.75h3.75a.75.75 0 010 1.5H9.999a.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>พล็อตกราฟและหาค่าที่เหมาะสม (Function Plotter & Optimizer)</h3>
+          
+          <div class="function-plotter-controls">
+            <div class="control-group">
+              <label for="func_expr">นิพจน์ฟังก์ชัน f(x)</label>
+              <div class="function-input-group">
+                <input id="func_expr" type="text" placeholder="เช่น x**2 - 2*x - 3">
+                <select id="func_select" title="เลือกฟังก์ชันตัวอย่าง">
+                  <option value="">ตัวอย่าง</option>
+                  <optgroup label="ฟังก์ชันพื้นฐาน">
+                  <option value="x**2 - 2*x - 3">พาราโบลา (Quadratic)</option>
+                  <option value="-0.1*x**3 + x**2 + 5*x - 4">ฟังก์ชันกำลังสาม (Cubic)</option>
+                  <option value="x**4 - 4*x**2 + 2">ฟังก์ชันกำลังสี่ (Quartic)</option>
+                  <option value="Math.abs(x-2) - 1">ค่าสัมบูรณ์ (Absolute Value)</option>
+                  </optgroup>
+                  <optgroup label="ตรีโกณมิติ">
+                  <option value="Math.sin(x)">ฟังก์ชันไซน์ (Sine)</option>
+                  <option value="Math.cos(x) * x">ฟังก์ชันโคไซน์ผสม (Damped Cosine)</option>
+                  <option value="Math.sin(x)/x">ฟังก์ชัน Sinc</option>
+                  </optgroup>
+                  <optgroup label="เอ็กซ์โพเนนเชียลและลอการิทึม">
+                  <option value="Math.log(x)">ลอการิทึมธรรมชาติ (Logarithm)</option>
+                  <option value="Math.exp(x)">เอ็กซ์โพเนนเชียล (Exponential)</option>
+                  <option value="1 / (1 + Math.exp(-x))">ฟังก์ชันซิกมอยด์ (Sigmoid)</option>
+                  <option value="Math.exp(-(x**2)/2) / Math.sqrt(2*Math.PI)">การแจกแจงปกติ (Gaussian)</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>ช่วงของแกน X</label>
+              <div class="range-input-group">
+                <input id="func_min_x" type="number" value="-10" title="ค่า x ต่ำสุด">
+                <span>ถึง</span>
+                <input id="func_max_x" type="number" value="10" title="ค่า x สูงสุด">
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn" id="plotFunc">พล็อตกราฟและหาค่า</button>
+          </div>
+          <div id="funcOut" class="output-container"></div>
+        </div>
+        <div>
+          <div id="funcPlot" class="plot-container"></div>
+        </div>
       </div>
+      <hr>
+      <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>เมทริกซ์สหสัมพันธ์ (Correlation Matrix)</h3>
+      <p style="color:var(--muted); margin-top:0;">คำนวณค่าสหสัมพันธ์เพียร์สัน (Pearson Correlation) ระหว่างตัวแปรหลายตัว</p>
+      
+      <div id="corr-vars-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+        <div class="corr-var-group">
+          <label>ชื่อตัวแปรที่ 1</label>
+          <input type="text" class="corr-var-name" value="Var1">
+          <label>ข้อมูล (คั่นด้วยคอมมา/ช่องว่าง)</label>
+          <textarea class="corr-var-data" placeholder="10 8 13 9..."></textarea>
+        </div>
+        <div class="corr-var-group">
+          <label>ชื่อตัวแปรที่ 2</label>
+          <input type="text" class="corr-var-name" value="Var2">
+          <label>ข้อมูล (คั่นด้วยคอมมา/ช่องว่าง)</label>
+          <textarea class="corr-var-data" placeholder="8.04 6.95 7.58..."></textarea>
+        </div>
+      </div>
+
       <div class="btn-group">
-        <button class="btn" id="plotFunc">พล็อตกราฟ</button>
+        <button class="btn-secondary btn-add" id="addCorrVar">เพิ่มตัวแปร</button>
+        <button class="btn-secondary btn-remove" id="removeCorrVar">ลบตัวแปร</button>
+        <button class="btn" id="calcCorrMatrix">คำนวณ</button>
+        <label for="corr_alpha" style="margin-left: 8px; margin-bottom: 0;">Alpha (α):</label>
+        <input id="corr_alpha" type="number" value="0.05" step="0.01" min="0.01" max="0.1" class="inline-input" style="width: 80px;">
       </div>
-      <div id="funcPlot" class="plot-container"></div>
+      <div class="grid2 output-container">
+        <div class="output-column">
+          <div id="corrOut"></div>
+          <div id="corrSteps"></div>
+        </div>
+        <div id="corrPlot" class="plot-container"></div>
+      </div>
     </section>
-    <section id="econ" class="panel" style="display:none">
-      <h2>เศรษฐศาสตร์ (อุปสงค์/อุปทาน)</h2>
+    <section id="econ" class="panel">
+      <h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h2-icon"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a.75.75 0 01.042.987l-1.024 1.285a.75.75 0 01-1.127-.894l1.024-1.286a.75.75 0 011.085-.091zM18.499 20.118a.75.75 0 011.085.091l1.024 1.285a.75.75 0 11-1.127.894l-1.024-1.286a.75.75 0 01.042-.987z" /><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM6.262 6.072a8.25 8.25 0 1011.476 0 8.25 8.25 0 00-11.476 0z" clip-rule="evenodd" /></svg>เศรษฐศาสตร์ (อุปสงค์/อุปทาน)</h2>
       <p style="color:var(--muted)">ฟอร์ม: Qd = a - bP , Qs = c + dP</p>
       <div class="row">
         <div>
@@ -159,15 +286,14 @@
         <div>
           <div id="econOut"></div>
           <hr>
-          <h3>จุดคุ้มทุน (Break-even)</h3>
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>จุดคุ้มทุน (Break-even)</h3>
           <label for="fc">ต้นทุนคงที่ (Fixed Costs)</label>
           <input id="fc" type="number" value="1000">
           <label for="vc">ต้นทุนผันแปรต่อหน่วย (Variable Cost)</label>
           <input id="vc" type="number" value="5">
           <label for="ppu">ราคาขายต่อหน่วย (Price per Unit)</label>
           <input id="ppu" type="number" value="15">
-          <div class="btn-group"><button class="btn" id="calcBE">คำนวณ BE</button></div>
-          <div id="beOut" class="output-container"></div> <hr> <h3>ปริมาณการสั่งซื้อที่ประหยัดที่สุด (EOQ)</h3>
+          <div class="btn-group"><button class="btn" id="calcBE">คำนวณ BE</button></div><div id="beOut" class="output-container"></div> <hr> <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>ปริมาณการสั่งซื้อที่ประหยัดที่สุด (EOQ)</h3>
           <label for="eoq_d">ความต้องการสินค้าต่อปี (D)</label>
           <input id="eoq_d" type="number" value="1000">
           <label for="eoq_s">ต้นทุนการสั่งซื้อต่อครั้ง (S)</label>
@@ -182,259 +308,278 @@
         </div>
       </div>
     </section>
-    <section id="algebra" class="panel" style="display:none">
-      <h2>พีชคณิต (Algebra)</h2>
+    <section id="algebra" class="panel">
+      <h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h2-icon"><path fill-rule="evenodd" d="M4.75 2.25a.75.75 0 000 1.5h14.5a.75.75 0 000-1.5H4.75zM4.75 6a.75.75 0 000 1.5h14.5a.75.75 0 000-1.5H4.75zM4.75 12a.75.75 0 000 1.5h14.5a.75.75 0 000-1.5H4.75zM4.75 16.5a.75.75 0 000 1.5h14.5a.75.75 0 000-1.5H4.75zM4.75 21a.75.75 0 000 1.5h14.5a.75.75 0 000-1.5H4.75z" clip-rule="evenodd" /></svg>พีชคณิต</h2>
       
-      <h3>แก้สมการเชิงเส้น (ax + b = c)</h3>
-      <div class="btn-group">
-        <input id="lin_a" type="number" placeholder="a" value="2" class="inline-input" style="width: 80px;">
-        <label style="margin:0 4px;">x +</label>
-        <input id="lin_b" type="number" placeholder="b" value="5" class="inline-input" style="width: 80px;">
-        <label style="margin:0 4px;">=</label>
-        <input id="lin_c" type="number" placeholder="c" value="15" class="inline-input" style="width: 80px;">
-        <button class="btn" id="calcLinEq">แก้สมการ</button>
-      </div>
-      <div id="linEqOut" class="output-container"></div>
-      <hr>
-
-      <h3>แก้สมการกำลังสอง (ax² + bx + c = 0)</h3>
-      <div class="btn-group">
-        <input id="quad_a" type="number" placeholder="a" value="1" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">x² +</label>
-        <input id="quad_b" type="number" placeholder="b" value="-3" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">x +</label>
-        <input id="quad_c" type="number" placeholder="c" value="2" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">= 0</label>
-        <button class="btn" id="calcQuadEq">แก้สมการ</button>
-      </div>
-      <div id="quadEqOut" class="output-container"></div>
-      <hr>
-
-      <h3>เลขยกกำลัง (Base<sup>Exponent</sup>)</h3>
-      <div class="btn-group">
-        <label style="margin:0 4px;">ฐาน (Base):</label>
-        <input id="pow_base" type="number" placeholder="Base" value="2" class="inline-input" style="width: 100px;">
-        <label style="margin:0 4px;">เลขชี้กำลัง (Exponent):</label>
-        <input id="pow_exp" type="number" placeholder="Exponent" value="10" class="inline-input" style="width: 100px;">
-        <button class="btn" id="calcPow">คำนวณ</button>
-      </div>
-      <div id="powOut" class="output-container"></div>
-      <hr>
-
-      <h3>ลอการิทึม (log<sub>Base</sub>(Number))</h3>
-      <div class="btn-group">
-        <label style="margin:0 4px;">ฐาน (Base):</label>
-        <input id="log_base" type="number" placeholder="Base" value="10" class="inline-input" style="width: 100px;">
-        <label style="margin:0 4px;">ตัวเลข (Number):</label>
-        <input id="log_num" type="number" placeholder="Number" value="100" class="inline-input" style="width: 100px;">
-        <button class="btn" id="calcLog">คำนวณ</button>
-      </div>
-      <div id="logOut" class="output-container"></div>
-      <hr>
-
-      <h3>อนุกรมเลขคณิต (Arithmetic Series)</h3>
-      <p style="color:var(--muted); margin-top:0;">คำนวณผลบวก n พจน์แรก: S<sub>n</sub> = n/2 * (2a<sub>1</sub> + (n-1)d)</p>
-      <div class="row">
-        <div>
+      <div class="calculation-groups">
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>แก้สมการเชิงเส้น (ax + b = c)</h3>
+          <div class="equation-input-group">
+            <input id="lin_a" type="number" placeholder="a" value="2" title="ค่า a">
+            <label>x +</label>
+            <input id="lin_b" type="number" placeholder="b" value="5" title="ค่า b">
+            <label>=</label>
+            <input id="lin_c" type="number" placeholder="c" value="15" title="ค่า c">
+            <button class="btn" id="calcLinEq">แก้สมการ</button>
+          </div>
+          <div id="linEqOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>แก้สมการกำลังสอง (ax² + bx + c = 0)</h3>
+          <div class="equation-input-group">
+            <input id="quad_a" type="number" placeholder="a" value="1" title="ค่า a"><label>x² +</label>
+            <input id="quad_b" type="number" placeholder="b" value="-3" title="ค่า b"><label>x +</label>
+            <input id="quad_c" type="number" placeholder="c" value="2" title="ค่า c"><label>= 0</label>
+            <button class="btn" id="calcQuadEq">แก้สมการ</button>
+          </div>
+          <div id="quadEqOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>เลขยกกำลัง (Base<sup>Exponent</sup>)</h3>
+          <div class="equation-input-group">
+            <label>ฐาน:</label>
+            <input id="pow_base" type="number" placeholder="Base" value="2">
+            <label>เลขชี้กำลัง:</label>
+            <input id="pow_exp" type="number" placeholder="Exponent" value="10">
+            <button class="btn" id="calcPow">คำนวณ</button>
+          </div>
+          <div id="powOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>ลอการิทึม (log<sub>Base</sub>(Number))</h3>
+          <div class="equation-input-group">
+            <label>ฐาน:</label>
+            <input id="log_base" type="number" placeholder="Base" value="10">
+            <label>ตัวเลข:</label>
+            <input id="log_num" type="number" placeholder="Number" value="100">
+            <button class="btn" id="calcLog">คำนวณ</button>
+          </div>
+          <div id="logOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>อนุกรมเลขคณิต (Arithmetic Series)</h3>
+          <p class="muted-text">S<sub>n</sub> = n/2 * (2a<sub>1</sub> + (n-1)d)</p>
+          <div class="finance-input-grid">
           <label for="arith_a1">พจน์แรก (a₁)</label>
           <input id="arith_a1" type="number" value="1">
-        </div>
-        <div>
           <label for="arith_d">ผลต่างร่วม (d)</label>
           <input id="arith_d" type="number" value="2">
-        </div>
-        <div>
           <label for="arith_n">จำนวนพจน์ (n)</label>
           <input id="arith_n" type="number" value="10">
         </div>
+          <div class="btn-group"><button class="btn" id="calcArith">คำนวณ</button></div>
+          <div id="arithOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>อนุกรมเรขาคณิต (Geometric Series)</h3>
+          <p class="muted-text">S<sub>n</sub> = a₁(1-rⁿ)/(1-r)</p>
+          <div class="finance-input-grid">
+            <label for="geo_a1">พจน์แรก (a₁)</label><input id="geo_a1" type="number" value="2">
+            <label for="geo_r">อัตราส่วนร่วม (r)</label><input id="geo_r" type="number" value="3">
+            <label for="geo_n">จำนวนพจน์ (n)</label><input id="geo_n" type="number" value="5">
+          </div>
+          <div class="btn-group"><button class="btn" id="calcGeo">คำนวณ</button></div>
+          <div id="geoOut" class="output-container"></div>
+        </div>
       </div>
-      <div class="btn-group"><button class="btn" id="calcArith">คำนวณ</button></div>
-      <div id="arithOut" class="output-container"></div>
-      <hr>
-
-      <h3>อนุกรมเรขาคณิต (Geometric Series)</h3>
-      <p style="color:var(--muted); margin-top:0;">คำนวณผลบวก n พจน์แรก: S<sub>n</sub> = a₁(1-rⁿ)/(1-r)</p>
-      <div class="row">
-        <div><label for="geo_a1">พจน์แรก (a₁)</label><input id="geo_a1" type="number" value="2"></div>
-        <div><label for="geo_r">อัตราส่วนร่วม (r)</label><input id="geo_r" type="number" value="3"></div>
-        <div><label for="geo_n">จำนวนพจน์ (n)</label><input id="geo_n" type="number" value="5"></div>
-      </div>
-      <div class="btn-group"><button class="btn" id="calcGeo">คำนวณ</button></div>
-      <div id="geoOut" class="output-container"></div>
     </section>
 
-    <section id="finance" class="panel" style="display:none">
-      <h2>การเงินพื้นฐาน (Basic Finance)</h2>
+    <section id="finance" class="panel">
+      <h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h2-icon"><path d="M2.25 6.125c0-1.036.84-1.875 1.875-1.875h15.75c1.035 0 1.875.84 1.875 1.875v11.75c0 1.035-.84 1.875-1.875 1.875H4.125c-1.036 0-1.875-.84-1.875-1.875V6.125zM3.75 6.125a.375.375 0 00-.375.375v11.75c0 .207.168.375.375.375h15.75a.375.375 0 00.375-.375V6.5a.375.375 0 00-.375-.375H3.75zM17.25 8.25a.75.75 0 000-1.5H6.75a.75.75 0 000 1.5h10.5z" /><path d="M14.25 12a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75zM10.5 10.5a.75.75 0 00-1.5 0v.01a.75.75 0 001.5 0v-.01zM10.5 12a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75zM7.5 10.5a.75.75 0 00-1.5 0v.01a.75.75 0 001.5 0v-.01zM7.5 12a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75zM14.25 10.5a.75.75 0 00-1.5 0v.01a.75.75 0 001.5 0v-.01zM18 10.5a.75.75 0 00-1.5 0v.01a.75.75 0 001.5 0v-.01zM18 12a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75z" /><path d="M9 14.25a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75zM12.75 14.25a.75.75 0 00-1.5 0v.01a.75.75 0 001.5 0v-.01zM12.75 15.75a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75zM16.5 14.25a.75.75 0 00-1.5 0v.01a.75.75 0 001.5 0v-.01zM16.5 15.75a.75.75 0 01.75.75v.01a.75.75 0 01-1.5 0v-.01a.75.75 0 01.75-.75z" /></svg>การเงิน</h2>
       
-      <h3>ร้อยละ / เปอร์เซ็นต์ (Percentage)</h3>
-      <div class="row">
-        <div>
-          <p style="color:var(--muted); margin-top:0;">หาค่าจากเปอร์เซ็นต์ (เช่น 20% ของ 150 คือเท่าไหร่)</p>
-          <div class="btn-group">
-            <input id="perc1_p" type="number" value="20" class="inline-input" style="width: 80px;"><label style="margin:0 4px;">% ของ</label>
-            <input id="perc1_val" type="number" value="150" class="inline-input" style="width: 120px;">
+      <div class="calculation-groups">
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>เปอร์เซ็นต์</h3>
+          <p class="muted-text">เช่น 20% ของ 150 คือเท่าไหร่</p>
+          <div class="equation-input-group">
+            <input id="perc1_p" type="number" value="20">
+            <label>% ของ</label>
+            <input id="perc1_val" type="number" value="150">
             <button class="btn" id="calcPerc1">คำนวณ</button>
           </div>
           <div id="perc1Out" class="output-container"></div>
         </div>
-        <div>
-          <p style="color:var(--muted); margin-top:0;">หาว่าคิดเป็นกี่เปอร์เซ็นต์ (เช่น 30 เป็นกี่ % ของ 150)</p>
-          <div class="btn-group">
-            <input id="perc2_part" type="number" value="30" class="inline-input" style="width: 120px;"><label style="margin:0 4px;">เป็นกี่ % ของ</label>
-            <input id="perc2_total" type="number" value="150" class="inline-input" style="width: 120px;">
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>สัดส่วน</h3>
+          <p class="muted-text">เช่น 30 เป็นกี่ % ของ 150</p>
+          <div class="equation-input-group">
+            <input id="perc2_part" type="number" value="30">
+            <label>เป็นกี่ % ของ</label>
+            <input id="perc2_total" type="number" value="150">
             <button class="btn" id="calcPerc2">คำนวณ</button>
           </div>
           <div id="perc2Out" class="output-container"></div>
         </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>อัตราส่วน (Ratio)</h3>
+          <p class="muted-text">ลดทอนอัตราส่วนให้อยู่ในรูปอย่างต่ำ</p>
+          <div class="equation-input-group">
+            <input id="ratio_a" type="number" value="50">
+            <label>:</label>
+            <input id="ratio_b" type="number" value="100">
+            <button class="btn" id="calcRatio">ลดทอน</button>
+          </div>
+          <div id="ratioOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>ดอกเบี้ยธรรมดา (Simple Interest)</h3>
+          <div class="finance-input-grid">
+            <label for="si_p">เงินต้น (Principal)</label>
+            <input id="si_p" type="number" value="10000">
+            <label for="si_r">อัตราดอกเบี้ยต่อปี (%)</label>
+            <input id="si_r" type="number" value="5">
+            <label for="si_t">ระยะเวลา (ปี)</label>
+            <input id="si_t" type="number" value="3">
+          </div>
+          <div class="btn-group"><button class="btn" id="calcSI">คำนวณ</button></div>
+          <div id="siOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>ดอกเบี้ยทบต้น / มูลค่าอนาคต (FV)</h3>
+          <div class="finance-input-grid">
+            <label for="fv_p">เงินต้น (Principal)</label>
+            <input id="fv_p" type="number" value="10000">
+            <label for="fv_r">อัตราดอกเบี้ยต่อปี (%)</label>
+            <input id="fv_r" type="number" value="5">
+            <label for="fv_n">จำนวนครั้งที่ทบต้นต่อปี</label>
+            <input id="fv_n" type="number" value="12">
+            <label for="fv_t">จำนวนปี</label>
+            <input id="fv_t" type="number" value="10">
+          </div>
+          <div class="btn-group"><button class="btn" id="calcFV">คำนวณ</button></div>
+          <div id="fvOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>มูลค่าปัจจุบัน (PV)</h3>
+          <p class="muted-text">คำนวณว่าต้องใช้เงินต้นเท่าไหร่เพื่อให้ได้เงินตามเป้าหมายในอนาคต</p>
+          <div class="finance-input-grid">
+            <label for="pv_fv">มูลค่าเป้าหมายในอนาคต (Future Value)</label>
+            <input id="pv_fv" type="number" value="20000">
+            <label for="pv_r">อัตราผลตอบแทนต่อปี (%)</label>
+            <input id="pv_r" type="number" value="5">
+            <label for="pv_n">จำนวนครั้งที่ทบต้นต่อปี</label>
+            <input id="pv_n" type="number" value="12">
+            <label for="pv_t">จำนวนปี</label>
+            <input id="pv_t" type="number" value="10">
+          </div>
+          <div class="btn-group"><button class="btn" id="calcPV">คำนวณ</button></div>
+          <div id="pvOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>คำนวณเงินกู้/สินเชื่อ (Loan Payment)</h3>
+          <div class="finance-input-grid">
+            <label for="loan_p">เงินต้น (Loan Amount)</label>
+            <input id="loan_p" type="number" value="1000000">
+            <label for="loan_r">อัตราดอกเบี้ยต่อปี (%)</label>
+            <input id="loan_r" type="number" value="3">
+            <label for="loan_t">ระยะเวลา (ปี)</label>
+            <input id="loan_t" type="number" value="30">
+            <label for="loan_n">จำนวนงวดต่อปี</label>
+            <input id="loan_n" type="number" value="12">
+          </div>
+          <div class="btn-group"><button class="btn" id="calcLoan">คำนวณ</button></div>
+          <div id="loanOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>มูลค่าปัจจุบันสุทธิ (NPV)</h3>
+          <label for="npv_rate">อัตราคิดลด (Discount Rate, %)</label>
+          <input id="npv_rate" type="number" value="10" class="inline-input">
+          
+          <div id="npv-cashflows-container" style="margin-top: 12px;">
+            <!-- Cash flow inputs will be generated here by JS -->
+          </div>
+    
+          <div class="btn-group" style="justify-content: flex-start; margin-top: 0;">
+            <button class="btn-secondary btn-add" id="addNpvCf" title="เพิ่มกระแสเงินสด">+</button>
+            <button class="btn-secondary btn-remove" id="removeNpvCf" title="ลบกระแสเงินสดล่าสุด">-</button>
+          </div>
+    
+          <div class="btn-group"><button class="btn" id="calcNPV">คำนวณ NPV</button></div>
+          <div id="npvOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>อัตราผลตอบแทนภายใน (IRR)</h3>
+          <p style="color:var(--muted); margin-top:0;">คำนวณหาอัตราคิดลดที่ทำให้ NPV ของโครงการเป็นศูนย์</p>
+          <div id="irr-cashflows-container" style="margin-top: 12px;">
+            <!-- IRR Cash flow inputs will be generated here by JS -->
+          </div>
+          <div class="btn-group" style="justify-content: flex-start; margin-top: 0;">
+            <button class="btn-secondary btn-add" id="addIrrCf" title="เพิ่มกระแสเงินสด">+</button>
+            <button class="btn-secondary btn-remove" id="removeIrrCf" title="ลบกระแสเงินสดล่าสุด">-</button>
+          </div>
+    
+          <div class="btn-group"><button class="btn" id="calcIRR">คำนวณ IRR</button></div>
+          <div id="irrOut" class="output-container"></div>
+        </div>
       </div>
-      <hr>
-
-      <h3>อัตราส่วน (Ratio)</h3>
-      <p style="color:var(--muted); margin-top:0;">ลดทอนอัตราส่วนให้อยู่ในรูปอย่างต่ำ</p>
-      <div class="btn-group">
-        <input id="ratio_a" type="number" value="50" class="inline-input" style="width: 120px;"><label style="margin:0 4px;">:</label>
-        <input id="ratio_b" type="number" value="100" class="inline-input" style="width: 120px;">
-        <button class="btn" id="calcRatio">ลดทอน</button>
-      </div>
-      <div id="ratioOut" class="output-container"></div>
-      <hr>
-
-      <h3>ดอกเบี้ยธรรมดา (Simple Interest)</h3>
-      <div class="row">
-        <div>
-          <label for="si_p">เงินต้น (Principal)</label>
-          <input id="si_p" type="number" value="10000">
-        </div>
-        <div>
-          <label for="si_r">อัตราดอกเบี้ยต่อปี (%)</label>
-          <input id="si_r" type="number" value="5">
-        </div>
-        <div>
-          <label for="si_t">ระยะเวลา (ปี)</label>
-          <input id="si_t" type="number" value="3">
-        </div>
-      </div>
-      <div class="btn-group"><button class="btn" id="calcSI">คำนวณ</button></div>
-      <div id="siOut" class="output-container"></div>
-      <hr>
-
-      <h3>ดอกเบี้ยทบต้น / มูลค่าอนาคต (Compound Interest / FV)</h3>
-      <div class="row">
-        <div>
-          <label for="fv_p">เงินต้น (Principal)</label>
-          <input id="fv_p" type="number" value="10000">
-        </div>
-        <div>
-          <label for="fv_r">อัตราดอกเบี้ยต่อปี (%)</label>
-          <input id="fv_r" type="number" value="5">
-        </div>
-        <div>
-          <label for="fv_n">จำนวนครั้งที่ทบต้นต่อปี</label>
-          <input id="fv_n" type="number" value="12">
-        </div>
-        <div>
-          <label for="fv_t">จำนวนปี</label>
-          <input id="fv_t" type="number" value="10">
-        </div>
-      </div>
-      <div class="btn-group"><button class="btn" id="calcFV">คำนวณ</button></div>
-      <div id="fvOut" class="output-container"></div>
-      <hr>
-
-      <h3>มูลค่าปัจจุบัน (Present Value)</h3>
-      <p style="color:var(--muted); margin-top:0;">คำนวณว่าต้องใช้เงินต้นเท่าไหร่เพื่อให้ได้เงินตามเป้าหมายในอนาคต</p>
-      <div class="row">
-        <div>
-          <label for="pv_fv">มูลค่าเป้าหมายในอนาคต (Future Value)</label>
-          <input id="pv_fv" type="number" value="20000">
-        </div>
-        <div>
-          <label for="pv_r">อัตราผลตอบแทนต่อปี (%)</label>
-          <input id="pv_r" type="number" value="5">
-        </div>
-        <div>
-          <label for="pv_n">จำนวนครั้งที่ทบต้นต่อปี</label>
-          <input id="pv_n" type="number" value="12">
-        </div>
-        <div>
-          <label for="pv_t">จำนวนปี</label>
-          <input id="pv_t" type="number" value="10">
-        </div>
-      </div>
-      <div class="btn-group"><button class="btn" id="calcPV">คำนวณ</button></div>
-      <div id="pvOut" class="output-container"></div>
-
-      <hr>
-
-      <h3>คำนวณเงินกู้/สินเชื่อ (Loan Payment)</h3>
-      <div class="row">
-        <div>
-          <label for="loan_p">เงินต้น (Loan Amount)</label>
-          <input id="loan_p" type="number" value="1000000">
-        </div>
-        <div>
-          <label for="loan_r">อัตราดอกเบี้ยต่อปี (%)</label>
-          <input id="loan_r" type="number" value="3">
-        </div>
-        <div>
-          <label for="loan_t">ระยะเวลา (ปี)</label>
-          <input id="loan_t" type="number" value="30">
-        </div>
-        <div>
-          <label for="loan_n">จำนวนงวดต่อปี</label>
-          <input id="loan_n" type="number" value="12">
-        </div>
-      </div>
-      <div class="btn-group"><button class="btn" id="calcLoan">คำนวณ</button></div>
-      <div id="loanOut" class="output-container"></div>
-      <hr>
-
-      <h3>มูลค่าปัจจุบันสุทธิ (NPV)</h3>
-      <label for="npv_rate">อัตราคิดลด (Discount Rate, %)</label>
-      <input id="npv_rate" type="number" value="10">
-      <label for="npv_cfs">กระแสเงินสด (ใส่เงินลงทุนเริ่มต้นเป็นค่าลบ, คั่นด้วยคอมมา)</label>
-      <textarea id="npv_cfs" placeholder="-10000, 2500, 3000, 3500, 4000"></textarea>
-      <div class="btn-group"><button class="btn" id="calcNPV">คำนวณ NPV</button></div>
-      <div id="npvOut" class="output-container"></div>
-      <hr>
-
-      <h3>อัตราผลตอบแทนภายใน (IRR)</h3>
-      <p style="color:var(--muted); margin-top:0;">คำนวณหาอัตราคิดลดที่ทำให้ NPV ของโครงการเป็นศูนย์</p>
-      <label for="irr_cfs">กระแสเงินสด (ใส่เงินลงทุนเริ่มต้นเป็นค่าลบ, คั่นด้วยคอมมา)</label>
-      <textarea id="irr_cfs" placeholder="-10000, 3000, 4000, 5000, 2000"></textarea>
-      <div class="btn-group"><button class="btn" id="calcIRR">คำนวณ IRR</button></div>
-      <div id="irrOut" class="output-container"></div>
     </section>
 
-    <section id="inference" class="panel" style="display:none">
-      <h2>สถิติอนุมาน (Inferential Statistics)</h2>
-
-      <h3>การทดสอบที (Two-Sample t-Test)</h3>
-      <p style="color:var(--muted); margin-top:0;">ทดสอบสมมติฐานว่าค่าเฉลี่ยของสองกลุ่มประชากรไม่เท่ากัน (H₁: μ₁ ≠ μ₂)</p>
-      <div class="row">
-        <div>
+    <section id="inference" class="panel">
+      <h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h2-icon"><path fill-rule="evenodd" d="M2.25 2.25a.75.75 0 000 1.5H3v10.5a3 3 0 003 3h1.21l-2.12 3.18a.75.75 0 001.27.84l2.12-3.18H15.75l2.12 3.18a.75.75 0 001.27-.84l-2.12-3.18H18a3 3 0 003-3V3.75h.75a.75.75 0 000-1.5H2.25z" clip-rule="evenodd" /></svg>สถิติอนุมาน</h2>
+      <div class="calculation-groups">
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>การทดสอบที (Two-Sample t-Test)</h3>
+          <p class="muted-text">ทดสอบสมมติฐานว่าค่าเฉลี่ยของสองกลุ่มประชากรไม่เท่ากัน (H₁: μ₁ ≠ μ₂)</p>
           <label for="ttest_samp1">ข้อมูลกลุ่มที่ 1</label>
           <textarea id="ttest_samp1" placeholder="1.1 2.3 2.5 4.1"></textarea>
-        </div>
-        <div>
           <label for="ttest_samp2">ข้อมูลกลุ่มที่ 2</label>
           <textarea id="ttest_samp2" placeholder="3.1 3.5 4.2 4.8 5.0"></textarea>
+          <div class="btn-group"><button class="btn" id="calcTTest">คำนวณ t-test</button></div>
+          <div id="ttestOut" class="output-container"></div>
+        </div>
+        <div class="calculation-group">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>การทดสอบไคสแควร์ (Chi-Square)</h3>
+          <p class="muted-text">ทดสอบว่าข้อมูลที่สังเกตได้สอดคล้องกับการแจกแจงที่คาดหวังหรือไม่</p>
+          <div class="finance-input-grid">
+            <label for="chi_obs">ความถี่ที่สังเกตได้ (Observed)</label>
+            <input id="chi_obs" placeholder="50 30 20">
+            <label for="chi_exp">ความถี่ที่คาดหวัง (Expected)</label>
+            <input id="chi_exp" placeholder="40 40 20">
+          </div>
+          <div class="btn-group"><button class="btn" id="calcChiSquare">คำนวณ Chi-Square</button></div>
+          <div id="chiOut" class="output-container"></div>
         </div>
       </div>
-      <div class="btn-group"><button class="btn" id="calcTTest">คำนวณ t-test</button></div>
-      <div id="ttestOut" class="output-container"></div>
-      <hr>
 
-      <h3>การทดสอบไคสแควร์ (Chi-Square Goodness-of-Fit)</h3>
-      <p style="color:var(--muted); margin-top:0;">ทดสอบว่าข้อมูลที่สังเกตได้สอดคล้องกับการแจกแจงที่คาดหวังหรือไม่</p>
-      <label for="chi_obs">ความถี่ที่สังเกตได้ (Observed)</label>
-      <input id="chi_obs" placeholder="50 30 20">
-      <label for="chi_exp">ความถี่ที่คาดหวัง (Expected)</label>
-      <input id="chi_exp" placeholder="40 40 20">
-      <div class="btn-group"><button class="btn" id="calcChiSquare">คำนวณ Chi-Square</button></div>
-      <div id="chiOut" class="output-container"></div>
+      <div class="calculation-group" style="margin-top: 16px;">
+        <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h3-icon"><path d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" /></svg>การวิเคราะห์ความแปรปรวนทางเดียว (One-Way ANOVA)</h3>
+        <p class="muted-text">ทดสอบสมมติฐานว่าค่าเฉลี่ยของกลุ่มตั้งแต่ 2 กลุ่มขึ้นไปเท่ากันหรือไม่ (H₀: μ₁ = μ₂ = ... = μₖ)</p>
+        
+        <div id="anova-groups-container" class="anova-groups-container">
+          <div class="anova-group">
+              <label>ข้อมูลกลุ่มที่ 1</label>
+              <input type="text" class="anova-group-input" placeholder="17.5 18.2 19.1 16.9 18.8">
+          </div>
+          <div class="anova-group">
+              <label>ข้อมูลกลุ่มที่ 2</label>
+              <input type="text" class="anova-group-input" placeholder="21.3 20.5 22.4 19.8 20.9">
+          </div>
+        </div>
+
+        <div class="btn-group anova-controls">
+          <div class="btn-group">
+            <button class="btn-secondary btn-add" id="addAnovaGroup">เพิ่มกลุ่ม</button>
+            <button class="btn-secondary btn-remove" id="removeAnovaGroup">ลบกลุ่ม</button>
+          </div>
+          <div class="anova-alpha-group">
+            <label for="anova_alpha">Alpha (α):</label>
+            <input id="anova_alpha" type="number" value="0.05" step="0.01" min="0.01" max="0.1" class="inline-input">
+          </div>
+          <button class="btn" id="calcAnova">คำนวณ ANOVA</button>
+        </div>
+        <div class="grid2 output-container">
+          <div id="anovaOut"></div>
+          <div id="anovaPlot" class="plot-container"></div>
+        </div>
+      </div>
     </section>
 
-    <footer>POTSUN Analytics Tool © 2024</footer>
+    <footer>
+      POTSUN Analytics Tool © 2024
+      <button id="clearDataBtn">ล้างข้อมูลที่บันทึกไว้ทั้งหมด</button>
+    </footer>
   </div>
-
-  <script src="script.js" defer></script>
+  <!-- Use type="module" to allow importing other scripts -->
+  <script src="main.js" type="module"></script>
 </body>
 </html>
