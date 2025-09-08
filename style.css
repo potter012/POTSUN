@@ -1,51 +1,365 @@
-:root{ --bg:#071127; --panel:#0e1724; --muted:#9fb0c8; --text:#e6eef8; --accent:#22c55e; --accent2:#10b981; --radius:12px }
-*{box-sizing:border-box} html,body{height:100%;} body{margin:0;font-family:Inter, Roboto, "Noto Sans Thai", system-ui, -apple-system; background:linear-gradient(180deg,#041028 0%, #071127 60%); color:var(--text);}    
-.container{width:min(1100px,94%);margin:24px auto}
-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-header h1{margin:0;font-size:24px;font-weight:600}
-nav{display:flex;gap:8px}
-.tabbtn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
-.tabbtn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#042018;border:none}
-.panel{background:var(--panel);border:1px solid rgba(255,255,255,0.04);padding:16px;border-radius:12px;margin-top:18px}
-label{display:block;color:var(--muted);margin-bottom:6px}
-textarea,input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:#071527;color:var(--text);font-family:monospace}
-textarea{min-height:80px;resize:vertical}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;padding:10px 12px;border-radius:10px;color:#042018;cursor:pointer}
-pre{background:#081425;padding:10px;border-radius:8px;overflow:auto}
-.grid2{display:grid;grid-template-columns:1fr 420px;gap:12px}
-.btn-group{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
-.output-container{margin-top:12px}
-.plot-container{width:100%;height:360px}
-.inline-input{padding:8px;border-radius:8px;background:#071425;border:1px solid rgba(255,255,255,.04);color:var(--text)}
-#maWindow{width:110px}
-#predX{width:180px}
-#elasP{width:140px}
-hr{border:none;border-top:1px solid rgba(255,255,255,.03);margin:16px 0}
-footer{margin-top:24px;padding-top:12px;color:var(--muted);text-align:center;font-size:14px;border-top:1px solid rgba(255,255,255,0.04)}
+/* ==========================================================================
+   1. ROOT & BASE STYLES
+   ========================================================================== */
+
+:root { 
+    --bg: #000000;
+    --panel: #0a0a0a; 
+    --muted: #888888;
+    --text: #f0f0f0;
+    --accent: #b91c1c; /* red-700 */
+    --accent2: #dc2626; /* red-600 */
+    --input-bg: #050505;
+    --border-color: rgba(185, 28, 28, 0.2);
+    --pre-bg: #000000; 
+    --radius: 12px;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --accent-shadow-color: rgba(185, 28, 28, 0.2);
+}
+
+/* Light Theme */
+html[data-theme='light'] {
+    --bg: #e4e4e7; /* zinc-200, for better contrast */
+    --panel: #ffffff;
+    --muted: #52525b; /* zinc-600 */
+    --text: #18181b; /* zinc-900 */
+    --accent: #2563eb; /* blue-600 */
+    --accent2: #3b82f6; /* blue-500 */
+    --input-bg: #ffffff;
+    --border-color: rgba(0, 0, 0, 0.15);
+    --pre-bg: #f3f4f6; /* gray-100 */
+    --shadow-color: rgba(0, 0, 0, 0.12);
+    --accent-shadow-color: rgba(59, 130, 246, 0.2);
+}
+
+*{box-sizing:border-box} html,body{height:100%;} 
+body{
+    margin:0;
+    font-family:Inter, Roboto, "Noto Sans Thai", system-ui, -apple-system; 
+    background:var(--bg); 
+    background-color: var(--bg); /* Fallback color */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color:var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}    
+
+/* ==========================================================================
+   2. ANIMATIONS
+   ========================================================================== */
+
+.panel.active {
+    /* This will apply the animation every time the class is added */
+    animation: panelFadeIn 0.4s ease-out;
+}
+
+@keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   3. MAIN LAYOUT & TYPOGRAPHY
+   ========================================================================== */
+
+.container { width:min(1100px,94%); margin:24px auto; }
+
+header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+header h1{
+    margin:0;font-size:24px;font-weight:600;
+    text-shadow: 0 0 12px var(--accent-shadow-color);
+}
+h2, h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.h2-icon, .h3-icon { width: 1.2em; height: 1.2em; flex-shrink: 0; opacity: 0.7; }
+nav { 
+    display:flex; 
+    gap:8px; 
+    flex-wrap: nowrap; /* Prevent wrapping */
+    overflow-x: auto; /* Allow horizontal scrolling */
+}
+
+footer { margin-top:24px; padding-top:12px; color:var(--muted); text-align:center; font-size:14px; border-top:1px solid var(--border-color); }
+ 
+hr { border:none; border-top:1px solid var(--border-color); margin:24px 0; opacity: 0.5; }
+
+pre { background:var(--pre-bg); padding:10px; border-radius:8px; overflow:auto; border: 1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease; }
+
+label { display:block; color:var(--muted); margin-bottom:6px; transition: color 0.3s ease; }
+
+.muted-text {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 0;
+    flex-grow: 1; /* Pushes the button group to the bottom */
+    padding-bottom: 12px;
+}
+
+.katex { font-size: 1.1em; /* Make formulas slightly larger */ }
+.katex-display { text-align: center; /* Center block formulas */ margin: 0.5em 0; }
+
+/* ==========================================================================
+   4. CORE COMPONENTS
+   ========================================================================== */
+
+.panel{
+    background:var(--panel);border:1px solid var(--border-color);padding:16px 20px;border-radius:var(--radius);margin-top:18px; 
+    box-shadow: 0 8px 30px var(--shadow-color), 0 0 20px var(--accent-shadow-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.panel:not(.active) { display: none; }
+
+.tabbtn { background:transparent; border:1px solid var(--border-color); padding:8px 12px; border-radius:10px; color:var(--muted); cursor:pointer; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+.tabbtn:not(.active):hover { background-color: rgba(255, 255, 255, 0.05); border-color: var(--accent); }
+.tabbtn.active { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; border:none; font-weight: 500; }
+
+.btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; padding:10px 14px; border-radius:10px; color:white; cursor:pointer; font-weight: 500; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.btn:hover { 
+    transform: translateY(-1px); 
+    box-shadow: 0 6px 15px var(--shadow-color), 0 2px 8px var(--accent-shadow-color);
+}
+
+.btn-secondary {
+    padding: 10px 14px; border-radius: 10px; color: var(--text); cursor: pointer; font-weight: 500;
+    background: var(--panel); border: 1px solid var(--border-color);
+    transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+.btn-secondary:hover:not(:disabled) { 
+    background: var(--input-bg); 
+    border-color: var(--muted); 
+}
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; background: var(--panel); border-color: var(--border-color); }
+
+.btn-add { background-color: #15803d; border-color: #16a34a; color: #f0fdf4; }
+.btn-add:hover:not(:disabled) { background-color: #16a34a; border-color: #22c55e; }
+
+.btn-remove { background-color: #c2410c; border-color: #ea580c; color: #fff7ed; }
+.btn-remove:hover:not(:disabled) { background-color: #ea580c; border-color: #f97316; }
+
+#clearDataBtn {
+    display: block; margin: 16px auto 0; padding: 8px 16px; border-radius: 10px; cursor: pointer;
+    background-color: transparent; border: 1px solid var(--border-color); color: var(--muted);
+    transition: all 0.2s ease;
+}
+#clearDataBtn:hover { border-color: #c2410c; background-color: rgba(194, 65, 12, 0.1); color: #f97316; }
+
+textarea, input { width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text); font-family:monospace; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease; }
+textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-shadow-color);
+}
+textarea { min-height:80px; resize:vertical; }
+.inline-input { padding:8px; border-radius:8px; background:var(--input-bg); border:1px solid var(--border-color); color:var(--text); }
+
+details { margin-top: 12px; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; }
+summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+
 .error-message {
-  color: #f87171;
+  color: #fca5a5; /* red-300 */
   background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   padding: 10px;
   border-radius: 8px;
 }
-details {
-    margin-top: 12px;
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 8px 12px;
-}
-summary {
+
+.theme-toggle, .icon-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    color: var(--accent);
-    font-weight: 500;
+    transition: all 0.2s ease;
+    color: var(--muted);
 }
+
+.theme-toggle:hover, .icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.theme-toggle {
+    margin-left: auto; /* Push to the right */
+    font-size: 1.25rem; /* Adjust emoji size */
+}
+.theme-toggle .sun-icon { display: none; }
+html[data-theme='light'] .theme-toggle .sun-icon { display: block; }
+html[data-theme='light'] .theme-toggle .moon-icon { display: none; }
+html[data-theme='dark'] .theme-toggle .sun-icon { display: none; }
+
+/* ==========================================================================
+   5. LAYOUT HELPERS & GRIDS
+   ========================================================================== */
+
+.row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.grid2 { display:grid; grid-template-columns:1fr; gap:24px; }
+/* Make specific tabs' main content area 2 columns. */
+#quant .grid2, #econ .grid2 { grid-template-columns: 1fr 420px; }
+
+.btn-group { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; align-items:center; }
+
+.output-container { margin-top:12px; }
+.output-column {
+    /* This is a crucial fix for grid blowout. It tells the grid item that it's
+       allowed to shrink, even if its content (like a wide table) is very wide. */
+    min-width: 0;
+}
+.answer-container {
+    overflow-x: auto; /* Allow horizontal scrolling for wide tables */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+.plot-container { width:100%; height:360px; }
+
+/* ==========================================================================
+   6. SPECIFIC FEATURE/CALCULATOR STYLES
+   ========================================================================== */
+
+/* --- Generic Calculation Groups --- */
+.calculation-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+.calculation-group { 
+    background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 16px; 
+    display: flex; flex-direction: column; 
+    /* This is a crucial fix for grid blowout. It tells the grid item that it's
+       allowed to shrink, even if its content (like a wide formula) is very wide. */
+    min-width: 0; }
+.calculation-group h3 { margin-top: 0; margin-bottom: 4px; font-size: 1.1em; color: var(--text); }
+.calculation-group > .btn-group { justify-content: flex-end; }
+
+/* --- Finance & Algebra Inputs --- */
+.finance-input-grid { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; margin-bottom: 12px; }
+.finance-input-grid label { margin-bottom: 0; text-align: right; }
+
+.equation-input-group { display: flex; align-items: center; gap: 8px; background-color: var(--input-bg); padding: 12px; border-radius: var(--radius); border: 1px solid var(--border-color); flex-wrap: wrap; }
+.equation-input-group input { width: auto; flex: 1 1 80px; min-width: 80px; }
+.equation-input-group label { margin-bottom: 0; color: var(--text); font-family: monospace; }
+.equation-input-group .btn { flex-shrink: 0; }
+
+/* --- Function Plotter --- */
+.function-plotter-controls { display: flex; flex-direction: column; gap: 16px; margin-bottom: 12px; padding: 16px; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: var(--radius); }
+.control-group { display: flex; flex-direction: column; gap: 6px; }
+.control-group:not(:last-child) { margin-bottom: 16px; }
+.function-input-group { display: flex; }
+.function-input-group input { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
+.function-input-group select {
+    border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--panel); border: 1px solid var(--border-color);
+    padding: 0 12px; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    color: var(--text); /* Ensure text color is correct for the theme */
+    background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+}
+html:not([data-theme='light']) .function-input-group select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+html[data-theme='light'] .function-input-group select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2352525b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+.range-input-group { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.range-input-group input { text-align: center; }
+.range-input-group span { color: var(--muted); text-align: center; }
+
+/* --- Payoff Matrix --- */
+.payoff-grid-wrapper { overflow-x: auto; padding-bottom: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--input-bg); }
+.payoff-grid { display: grid; gap: 8px; align-items: center; padding: 12px; min-width: fit-content; }
+.payoff-grid .payoff-top-left { color: var(--muted); font-size: 12px; text-align: right; padding-right: 8px; }
+.payoff-grid input { padding: 8px; text-align: center; min-width: 100px; }
+.payoff-grid .payoff-alt-name { text-align: right; font-weight: 500; background-color: transparent; border-color: transparent; box-shadow: none; }
+.payoff-grid .payoff-state-name { font-weight: 500; background-color: rgba(255, 255, 255, 0.02); border-bottom: 2px solid var(--accent); }
+.payoff-grid .payoff-value:focus { transform: scale(1.05); z-index: 10; position: relative; }
+
+/* --- NPV & IRR --- */
+.npv-cf-group { display: grid; grid-template-columns: 220px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+.npv-cf-group label { margin-bottom: 0; }
+.irr-cf-group { display: grid; grid-template-columns: 220px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+.irr-cf-group label { margin-bottom: 0; }
+
+/* --- Correlation Matrix --- */
+.corr-var-group { display: flex; flex-direction: column; gap: 6px; }
+
+/* --- ANOVA --- */
+.anova-groups-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.anova-group { display: flex; flex-direction: column; }
+.anova-controls { justify-content: space-between; }
+.anova-controls .btn-group { margin-top: 0; }
+.anova-alpha-group { display: flex; align-items: center; gap: 8px; }
+.anova-alpha-group label { margin-bottom: 0; white-space: nowrap; color: var(--muted); }
+.anova-alpha-group .inline-input { width: 80px; }
+
+/* --- Finance, Algebra & Stats Tab Specifics --- */
+#finance .calculation-groups,
+#algebra .calculation-groups,
+#stats .calculation-groups,
+#inference .calculation-groups {
+    grid-template-columns: 1fr; /* Force single column layout */
+}
+
+/* --- Steps & Results Tables --- */
 .steps-container {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-color);
+    overflow-x: auto; /* Prevent wide tables from breaking layout */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     line-height: 1.6;
 }
-@media(max-width:900px){.row{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+.steps-container table.steps-table {
+    min-width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px;
+}
+.steps-container table.steps-table th,
+.steps-container table.steps-table td {
+    border: 1px solid var(--border-color); padding: 6px 8px; text-align: right;
+}
+.steps-container table.steps-table th { background-color: rgba(255, 255, 255, 0.05); }
+.steps-container table.steps-table th:first-child,
+.steps-container table.steps-table td:first-child { text-align: left; }
+.steps-container table.steps-table td.significant { color: #22c55e; }
+.steps-container table.steps-table td.not-significant { color: var(--muted); }
+.steps-container table.steps-table.compact { width: auto; min-width: 300px; margin-left: 16px; }
+.steps-container table.anova-table th, .steps-container table.anova-table td { padding: 8px 10px; }
+.steps-container table.anova-table td:first-child { font-weight: 500; }
+.steps-container table.anova-table tfoot tr { border-top: 2px solid var(--border-color); font-weight: bold; }
+.steps-container table.anova-table .result-value { font-weight: bold; color: var(--accent); }
+
+/* --- ID-based overrides (legacy) --- */
+#maWindow{width:110px}
+#predX{width:180px}
+#elasP{width:140px}
+
+/* ==========================================================================
+   7. MEDIA QUERIES
+   ========================================================================== */
+
+@media(max-width:900px){ 
+    .row {grid-template-columns: 1fr;}
+    #quant .grid2, #econ .grid2 {grid-template-columns: 1fr;}
+}
+@media(max-width: 700px) {
+    .calculation-groups { grid-template-columns: 1fr; }
+    #inference .calculation-groups {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media(max-width: 600px) {
+    .container { width: 100%; margin: 0; border-radius: 0; padding: 16px; }
+    header { gap: 12px; }
+    header h1 { font-size: 20px; }
+    .panel { padding: 12px; }
+    h2 { font-size: 1.3em; }
+    h3 { font-size: 1.1em; }
+    .anova-controls { flex-direction: column; gap: 12px; align-items: stretch; }
+    .anova-controls .btn-group { justify-content: flex-start; }
+    .anova-alpha-group { justify-content: flex-start; }
+    .range-input-group { grid-template-columns: 1fr; }
+    .range-input-group span { display: none; }
+    .equation-input-group .btn { width: 100%; margin-top: 8px; }
+}
