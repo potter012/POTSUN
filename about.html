@@ -1,0 +1,38 @@
+<style>
+    :root{ --bg:#071127; --panel:#0e1724; --muted:#9fb0c8; --text:#e6eef8; --accent:#22c55e; --accent2:#10b981; --radius:12px }
+    *{box-sizing:border-box} html,body{height:100%;} body{margin:0;font-family:Inter, Roboto, "Noto Sans Thai", system-ui, -apple-system; background:linear-gradient(180deg,#041028 0%, #071127 60%); color:var(--text);}    
+    .container{width:min(1100px,94%);margin:24px auto}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    header h1{margin:0;font-size:24px;font-weight:600}
+    nav{display:flex;gap:8px}
+    .tabbtn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .tabbtn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#042018;border:none}
+    .panel{background:var(--panel);border:1px solid rgba(255,255,255,0.04);padding:16px;border-radius:12px;margin-top:18px}
+    label{display:block;color:var(--muted);margin-bottom:6px}
+    textarea,input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:#071527;color:var(--text);font-family:monospace}
+    textarea{min-height:80px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;padding:10px 12px;border-radius:10px;color:#042018;cursor:pointer}
+    pre{background:#081425;padding:10px;border-radius:8px;overflow:auto}
+    .grid2{display:grid;grid-template-columns:1fr 420px;gap:12px}
+    .btn-group{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+    .output-container{margin-top:12px}
+    .plot-container{width:100%;height:360px}
+    .inline-input{padding:8px;border-radius:8px;background:#071425;border:1px solid rgba(255,255,255,.04);color:var(--text)}
+    #maWindow{width:110px}
+    #predX{width:180px}
+    #elasP{width:140px}
+    hr{border:none;border-top:1px solid rgba(255,255,255,.03);margin:16px 0}
+    footer{margin-top:24px;padding-top:12px;color:var(--muted);text-align:center;font-size:14px;border-top:1px solid rgba(255,255,255,0.04)}
+    @media(max-width:900px){.row{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+  </style>
+  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>POTSUN Analytics</h1>
+      <nav>
+        <button class="tabbtn active" data-tab="stats">สถิติธุรกิจ</button>
+        <button class="tabbtn" data-tab="quant">วิเคราะห์เชิงปริมาณ</button>
